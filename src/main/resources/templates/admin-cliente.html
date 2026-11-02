@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Cliente - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-admin">
+        <div class="logo"><i class="fas fa-shield-alt"></i> Admin - NanoBanana ERP</div>
+        <div class="user-info">
+            <span th:text="${session.adminNome}" style="font-weight:600;"></span>
+            <a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/admin"><i class="fas fa-arrow-left"></i> Voltar ao Dashboard</a></li>
+            </ul>
+        </aside>
+        <main class="content admin-content">
+            <h1>👤 Detalhes do Cliente</h1>
+
+            <!-- Info do Cliente -->
+            <div class="assinatura-card">
+                <h2 th:text="${cliente.nome}"></h2>
+                <table class="info-table">
+                    <tr><td><strong>Email</strong></td><td th:text="${cliente.email}"></td></tr>
+                    <tr><td><strong>Telefone</strong></td><td th:text="${cliente.telefone}"></td></tr>
+                    <tr><td><strong>Negócio</strong></td><td th:text="${cliente.nomeNegocio}"></td></tr>
+                    <tr><td><strong>Registo</strong></td><td th:text="${cliente.dataRegisto}"></td></tr>
+                </table>
+            </div>
+
+            <!-- Assinatura -->
+            <div class="assinatura-card" th:if="${assinatura}">
+                <h2>📋 Assinatura</h2>
+                <table class="info-table">
+                    <tr><td><strong>Plano</strong></td>
+                        <td>
+                            <span th:if="${assinatura.plano == 'pago'}" class="badge badge-success">Pago</span>
+                            <span th:if="${assinatura.plano == 'teste'}" class="badge badge-warning">Teste</span>
+                            <span th:if="${assinatura.plano == 'expirado'}" class="badge badge-danger">Expirado</span>
+                        </td>
+                    </tr>
+                    <tr><td><strong>Início</strong></td><td th:text="${assinatura.dataInicio}"></td></tr>
+                    <tr><td><strong>Fim Teste</strong></td><td th:text="${assinatura.dataFimTeste} ?: '-'"></td></tr>
+                    <tr><td><strong>Expiração</strong></td><td th:text="${assinatura.dataExpiracao} ?: '-'"></td></tr>
+                    <tr><td><strong>Ativa</strong></td>
+                        <td>
+                            <span th:if="${assinatura.isAtiva()}" class="badge badge-success">Sim</span>
+                            <span th:unless="${assinatura.isAtiva()}" class="badge badge-danger">Não</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3><i class="fas fa-shopping-cart"></i> Total Vendas</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalVendas, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card warning">
+                    <h3><i class="fas fa-book-open"></i> Fiado Pendente</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalFiado, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-boxes"></i> Valor Stock</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(valorStock, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-cubes"></i> Produtos</h3>
+                    <p class="stat-value" th:text="${produtos.size()}">0</p>
+                </div>
+            </div>
+
+            <!-- Produtos -->
+            <h2>📦 Produtos</h2>
+            <table class="nano-table">
+                <thead><tr><th>Nome</th><th>Preço</th><th>Stock</th><th>Valor</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(produtos)}"><td colspan="4" style="text-align:center;">Sem produtos.</td></tr>
+                    <tr th:each="p : ${produtos}">
+                        <td th:text="${p.nome}"></td>
+                        <td th:text="${p.preco} + ' MZN'"></td>
+                        <td th:text="${p.stock}"></td>
+                        <td th:text="${p.valorStock} + ' MZN'"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Fiados -->
+            <h2 style="margin-top:30px;">📖 Fiados</h2>
+            <table class="nano-table">
+                <thead><tr><th>Cliente</th><th>Valor</th><th>Data</th><th>Estado</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(fiados)}"><td colspan="4" style="text-align:center;">Sem fiados.</td></tr>
+                    <tr th:each="f : ${fiados}" th:class="${f.pago} ? 'pago' : ''">
+                        <td th:text="${f.nomeCliente}"></td>
+                        <td th:text="${f.valor} + ' MZN'"></td>
+                        <td th:text="${f.data}"></td>
+                        <td>
+                            <span th:if="${f.pago}" class="badge badge-success">Pago</span>
+                            <span th:unless="${f.pago}" class="badge badge-warning">Pendente</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Vendas Recentes -->
+            <h2 style="margin-top:30px;">🛒 Vendas Recentes</h2>
+            <table class="nano-table">
+                <thead><tr><th>ID</th><th>Data</th><th>Valor</th><th>Pagamento</th><th>Fiado</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(vendas)}"><td colspan="5" style="text-align:center;">Sem vendas.</td></tr>
+                    <tr th:each="v : ${vendas}" th:each-status="${v.cancelada} ? 'venda-cancelada' : ''">
+                        <td th:text="${v.id}"></td>
+                        <td th:text="${v.data}"></td>
+                        <td th:text="${#numbers.formatDecimal(v.valor, 1, 2)} + ' MZN'"></td>
+                        <td th:text="${v.formaPagamento}"></td>
+                        <td>
+                            <span th:if="${v.fiado}" class="badge badge-warning">Sim</span>
+                            <span th:unless="${v.fiado}" class="badge badge-success">Não</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>

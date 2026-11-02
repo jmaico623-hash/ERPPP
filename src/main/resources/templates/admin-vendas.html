@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendas Globais - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-admin">
+        <div class="logo"><i class="fas fa-shield-alt"></i> Admin</div>
+        <div class="user-info">
+            <span th:text="${session.adminNome}"></span>
+            <a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li class="active"><a href="/admin/vendas"><i class="fas fa-shopping-cart"></i> Vendas Globais</a></li>
+                <li><a href="/admin/ranking"><i class="fas fa-trophy"></i> Ranking</a></li>
+                <li><a href="/admin/financeiro"><i class="fas fa-chart-line"></i> Financeiro</a></li>
+                <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
+                <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
+                <li><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+            </ul>
+        </aside>
+        <main class="content admin-content" style="width:100%;">
+            <h1>📊 Vendas Globais</h1>
+            <div class="periodo-filtro">
+                <a th:href="@{/admin/vendas(periodo='hoje')}" th:class="${periodo == 'hoje' or periodo == null ? 'btn-periodo active' : 'btn-periodo'}">Hoje</a>
+                <a th:href="@{/admin/vendas(periodo='semana')}" th:class="${periodo == 'semana' ? 'btn-periodo active' : 'btn-periodo'}">Semana</a>
+                <a th:href="@{/admin/vendas(periodo='mes')}" th:class="${periodo == 'mes' ? 'btn-periodo active' : 'btn-periodo'}">Mês</a>
+                <a th:href="@{/admin/vendas(periodo='todas')}" th:class="${periodo == 'todas' ? 'btn-periodo active' : 'btn-periodo'}">Todas</a>
+            </div>
+            <div class="total-vendas-header">
+                <span th:text="${periodoLabel}"></span>
+                <span class="total-valor" th:text="${#numbers.formatDecimal(totalGeral, 1, 2)} + ' MZN'"></span>
+            </div>
+            <table class="nano-table">
+                <thead><tr><th>ID</th><th>Loja</th><th>Cliente</th><th>Data</th><th>Valor</th><th>Pagamento</th><th>Fiado</th><th>Troco</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(todasVendas)}"><td colspan="8" style="text-align:center;">Sem vendas neste período.</td></tr>
+                    <tr th:each="item : ${todasVendas}">
+                        <td th:text="${item.venda.id}"></td>
+                        <td th:text="${item.clienteNegocio}"></td>
+                        <td th:text="${item.clienteNome}"></td>
+                        <td th:text="${item.venda.data}"></td>
+                        <td th:text="${#numbers.formatDecimal(item.venda.valor, 1, 2)} + ' MZN'"></td>
+                        <td th:text="${item.venda.formaPagamento}"></td>
+                        <td><span th:if="${item.venda.fiado}" class="badge badge-warning">Sim</span><span th:unless="${item.venda.fiado}" class="badge badge-success">Não</span></td>
+                        <td th:text="${item.venda.troco != null ? #numbers.formatDecimal(item.venda.troco, 1, 2) + ' MZN' : '-'}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>

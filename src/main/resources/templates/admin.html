@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .admin-header { background: #2c3e50; color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .admin-header h1 { margin: 0; }
+        .admin-header p { opacity: 0.8; margin: 5px 0 0; }
+        .cliente-row { display: flex; align-items: center; gap: 10px; }
+        .plano-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .plano-pago { background: #EAFAF1; color: #27AE60; }
+        .plano-teste { background: #FEF9E7; color: #F39C12; }
+        .plano-expirado { background: #FDEDEC; color: #E74C3C; }
+        .plano-sem { background: #FDEDEC; color: #E74C3C; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-admin">
+        <div class="logo"><i class="fas fa-shield-alt"></i> Admin - NanoBanana ERP</div>
+        <div class="user-info">
+            <span th:text="${session.adminNome}" style="font-weight:600;"></span>
+            <a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li class="active"><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/vendas"><i class="fas fa-shopping-cart"></i> Vendas Globais</a></li>
+                <li><a href="/admin/ranking"><i class="fas fa-trophy"></i> Ranking</a></li>
+                <li><a href="/admin/financeiro"><i class="fas fa-chart-line"></i> Financeiro</a></li>
+                <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
+                <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
+                <li><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+            </ul>
+        </aside>
+        <main class="content admin-content" style="width:100%;">
+            <div class="admin-header">
+                <h1>🛡️ Painel Super Administrador</h1>
+                <p>Gestão central de todos os clientes e assinaturas</p>
+            </div>
+
+            <!-- Stats Globais -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3><i class="fas fa-users"></i> Total Clientes</h3>
+                    <p class="stat-value" th:text="${totalClientes}">0</p>
+                </div>
+                <div class="stat-card warning">
+                    <h3><i class="fas fa-flask"></i> Em Teste</h3>
+                    <p class="stat-value" th:text="${testes}">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-check-circle"></i> Ativas</h3>
+                    <p class="stat-value text-success" th:text="${ativas}">0</p>
+                </div>
+                <div class="stat-card danger">
+                    <h3><i class="fas fa-times-circle"></i> Expiradas</h3>
+                    <p class="stat-value text-danger" th:text="${expiradas}">0</p>
+                </div>
+            </div>
+
+            <!-- Stats Financeiras -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3><i class="fas fa-coins"></i> Receita Total</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(receitaTotal, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-calendar-week"></i> Esta Semana</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(receitaSemana, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-calendar"></i> Este Mês</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(receitaMes, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-chart-line"></i> Vendas Hoje</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(vendasHoje, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+            </div>
+
+            <!-- Pagamentos Pendentes -->
+            <h2>💰 Pagamentos Pendentes</h2>
+            <table class="nano-table" style="margin-bottom:30px;">
+                <thead><tr><th>ID</th><th>Cliente ID</th><th>Valor</th><th>Método</th><th>Data</th><th>Ação</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(pendentes)}">
+                        <td colspan="6" style="text-align:center;">Nenhum pagamento pendente ✅</td>
+                    </tr>
+                    <tr th:each="p : ${pendentes}">
+                        <td th:text="${p.id}"></td>
+                        <td th:text="${p.clienteId}"></td>
+                        <td th:text="${p.valor} + ' MZN'"></td>
+                        <td th:text="${p.metodo}"></td>
+                        <td th:text="${p.data}"></td>
+                        <td>
+                            <form th:action="@{/admin/confirmar-pagamento/{id}(id=${p.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-sm btn-success"><i class="fas fa-check"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Todos Clientes -->
+            <h2>👥 Todos os Clientes</h2>
+            <table class="nano-table">
+                <thead><tr><th>Nome</th><th>Email</th><th>Negócio</th><th>Plano</th><th>Expiração</th><th>Ações</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(clientes)}">
+                        <td colspan="6" style="text-align:center;">Nenhum cliente registado.</td>
+                    </tr>
+                    <tr th:each="c : ${clientes}">
+                        <td>
+                            <a th:href="@{/admin/cliente/{id}(id=${c.id})}" th:text="${c.nome}" style="color:#2ECC71;text-decoration:none;font-weight:600;"></a>
+                        </td>
+                        <td th:text="${c.email}"></td>
+                        <td th:text="${c.nomeNegocio}"></td>
+                        <td>
+                            <span th:if="${clienteAssinaturaMap[c.id] != null and clienteAssinaturaMap[c.id].plano == 'pago'}" class="plano-badge plano-pago">Pago</span>
+                            <span th:if="${clienteAssinaturaMap[c.id] != null and clienteAssinaturaMap[c.id].plano == 'teste'}" class="plano-badge plano-teste">Teste</span>
+                            <span th:if="${clienteAssinaturaMap[c.id] != null and clienteAssinaturaMap[c.id].plano == 'expirado'}" class="plano-badge plano-expirado">Expirado</span>
+                            <span th:if="${clienteAssinaturaMap[c.id] == null}" class="plano-badge plano-sem">Sem plano</span>
+                        </td>
+                        <td th:if="${clienteAssinaturaMap[c.id] != null}" th:text="${clienteAssinaturaMap[c.id].dataExpiracao} ?: '-'"></td>
+                        <td th:if="${clienteAssinaturaMap[c.id] == null}">-</td>
+                        <td>
+                            <form th:action="@{/admin/cliente/{id}/ativar(id=${c.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-sm btn-success" title="Ativar"><i class="fas fa-check"></i></button>
+                            </form>
+                            <form th:action="@{/admin/cliente/{id}/desativar(id=${c.id})}" method="post" style="display:inline;" onsubmit="return confirm('Desativar?')">
+                                <button type="submit" class="btn-sm btn-danger" title="Desativar"><i class="fas fa-times"></i></button>
+                            </form>
+                            <form th:action="@{/admin/cliente/{id}/estender-teste(id=${c.id})}" method="post" style="display:inline;" title="Estender teste">
+                                <button type="submit" class="btn-sm btn-primary"><i class="fas fa-clock"></i></button>
+                            </form>
+                            <form th:action="@{/admin/cliente/{id}/reset-senha(id=${c.id})}" method="post" style="display:inline;" title="Reset senha"
+                                  onsubmit="event.preventDefault(); var s=prompt('Nova senha:'); if(s){this.querySelector('[name=novaSenha]').value=s;this.submit();}">
+                                <input type="hidden" name="novaSenha">
+                                <button type="submit" class="btn-sm" style="background:#F39C12;" title="Reset senha"><i class="fas fa-key"></i></button>
+                            </form>
+                            <form th:action="@{/admin/cliente/{id}/apagar(id=${c.id})}" method="post" style="display:inline;" title="Apagar conta"
+                                  onsubmit="return confirm('⚠️ APAGAR permanentemente esta conta e todos os seus dados?')">
+                                <button type="submit" class="btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>

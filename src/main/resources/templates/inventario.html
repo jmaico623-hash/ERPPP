@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventário - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-leaf"></i> NanoBanana ERP</div>
+        <div class="user-info">
+            <span class="badge-plano" th:text="${session.plano}"></span>
+            <span class="merchant-name" th:text="${session.clienteNegocio}"></span>
+            <span class="client-name" th:text="${session.clienteNome}"></span>
+            <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/dashboard"><i class="fas fa-home"></i> Painel</a></li>
+                <li><a href="/vendas"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
+                <li><a href="/fiados"><i class="fas fa-book-open"></i> Fiado</a></li>
+                <li class="active"><a href="/inventario"><i class="fas fa-boxes"></i> Inventário</a></li>
+                <li><a href="/estagnados"><i class="fas fa-hourglass-end"></i> Estagnados</a></li>
+                <li><a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a></li>
+            </ul>
+        </aside>
+        <main class="content">
+            <h1>📦 Inventário</h1>
+
+            <details class="add-form">
+                <summary><i class="fas fa-plus-circle"></i> Adicionar Produto</summary>
+                <form action="/inventario/adicionar" method="post" class="inline-form">
+                    <input type="text" name="nome" placeholder="Nome do produto" required>
+                    <input type="number" name="preco" placeholder="Preço" step="0.01" required>
+                    <input type="number" name="stock" placeholder="Stock" min="0" required>
+                    <button type="submit" class="btn-success"><i class="fas fa-plus"></i> Adicionar</button>
+                </form>
+            </details>
+
+            <table class="nano-table">
+                <thead>
+                    <tr><th>ID</th><th>Produto</th><th>Preço</th><th>Stock</th><th>Valor Total</th><th>Estagnado?</th><th>Ações</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(produtos)}">
+                        <td colspan="7" style="text-align:center;">Nenhum produto. Adicione acima.</td>
+                    </tr>
+                    <tr th:each="p : ${produtos}" th:classappend="${p.estaEstagnado()} ? 'estagnado' : ''">
+                        <td th:text="${p.id}"></td>
+                        <td th:text="${p.nome}"></td>
+                        <td th:text="${p.preco} + ' MZN'"></td>
+                        <td th:text="${p.stock}"></td>
+                        <td th:text="${p.valorStock} + ' MZN'"></td>
+                        <td>
+                            <span th:if="${p.estaEstagnado()}" class="badge badge-danger">⚠️ Sim</span>
+                            <span th:unless="${p.estaEstagnado()}" class="badge badge-success">✅ Não</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/inventario/{id}/reabastecer(id=${p.id})}" method="post" style="display:inline;">
+                                <input type="number" name="qtd" min="1" value="10" style="width:60px;">
+                                <button type="submit" class="btn-sm btn-primary"><i class="fas fa-plus"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>

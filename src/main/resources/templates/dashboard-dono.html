@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar .logo { font-size: 20px; font-weight: 600; }
+        .navbar .user-info { display: flex; align-items: center; gap: 15px; }
+        .navbar .user-info span { font-size: 14px; opacity: 0.9; }
+        .navbar a { color: white; text-decoration: none; }
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.3); }
+
+        /* Layout */
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            padding: 20px 0;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #555;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .sidebar a:hover { background: #f0f4ff; color: #667eea; }
+        .sidebar a.active { background: #667eea; color: white; }
+        .sidebar a i { width: 20px; text-align: center; }
+        .sidebar .divider { height: 1px; background: #e0e0e0; margin: 15px 0; }
+
+        /* Main Content */
+        .main { flex: 1; padding: 30px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-size: 28px; color: #333; margin-bottom: 5px; }
+        .page-header p { color: #666; }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .alert-banner.critical { background: #f8d7da; border-color: #dc3545; }
+        .alert-banner i { font-size: 24px; color: #856404; }
+        .alert-banner.critical i { color: #dc3545; }
+        .alert-banner .count { font-weight: 600; color: #856404; }
+        .alert-banner.critical .count { color: #dc3545; }
+        .alert-banner a { margin-left: auto; color: #856404; font-weight: 500; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .stat-card .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        .stat-card .icon.blue { background: #e3f2fd; color: #2196f3; }
+        .stat-card .icon.green { background: #e8f5e9; color: #4caf50; }
+        .stat-card .icon.orange { background: #fff3e0; color: #ff9800; }
+        .stat-card .icon.red { background: #ffebee; color: #f44336; }
+        .stat-card .icon.purple { background: #f3e5f5; color: #9c27b0; }
+        .stat-card h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
+        .stat-card .value { font-size: 32px; font-weight: 700; color: #333; }
+        .stat-card .sub { font-size: 13px; color: #999; margin-top: 5px; }
+
+        /* Two Column Layout */
+        .two-cols { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .card h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h3 i { color: #667eea; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; font-size: 13px; color: #666; border-bottom: 2px solid #e0e0e0; }
+        td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f9f9f9; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success { background: #e8f5e9; color: #4caf50; }
+        .badge-warning { background: #fff3e0; color: #ff9800; }
+        .badge-danger { background: #ffebee; color: #f44336; }
+        .badge-info { background: #e3f2fd; color: #2196f3; }
+
+        /* Action Buttons */
+        .actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-warning { background: #ff9800; color: white; }
+
+        /* Alert List */
+        .alert-item {
+            padding: 12px;
+            border-left: 4px solid #ffc107;
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        .alert-item.critical { border-left-color: #dc3545; background: #fff5f5; }
+        .alert-item .time { font-size: 12px; color: #999; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo"><i class="fas fa-shield-alt"></i> NanoBanana ERP</div>
+        <div class="user-info">
+            <span><i class="fas fa-user"></i> <span th:text="${usuario.nome}">Dono</span></span>
+            <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a href="/dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/pdv"><i class="fas fa-cash-register"></i> PDV (Vender)</a>
+            <a href="/pdv/historico"><i class="fas fa-history"></i> Histórico Vendas</a>
+            <div class="divider"></div>
+            <a href="/stock/gestao"><i class="fas fa-boxes-stacked"></i> Gestão Stock</a>
+            <a href="/alertas">
+                <i class="fas fa-bell"></i> Alertas
+                <span th:if="${alertasNaoLidos > 0}" class="badge badge-danger" th:text="${alertasNaoLidos}">0</span>
+            </a>
+            <div class="divider"></div>
+            <a href="/fiados"><i class="fas fa-book"></i> Fiados</a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main">
+            <div class="page-header">
+                <h1>📊 Dashboard</h1>
+                <p th:text="'Visão geral da sua loja - ' + ${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}"></p>
+            </div>
+
+            <!-- Alert Banner -->
+            <div th:if="${alertasNaoLidos > 0}" class="alert-banner" th:classappend="${alertasNaoLidos > 3} ? ' critical' : ''">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <span class="count" th:text="${alertasNaoLidos + ' alerta(s) pendente(s)'}"></span>
+                </div>
+                <a href="/alertas">Ver alertas →</a>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="icon green"><i class="fas fa-money-bill-wave"></i></div>
+                    <h3>Vendas Hoje</h3>
+                    <div class="value" th:text="${totalVendas + ' MZN'}">0 MZN</div>
+                    <div class="sub" th:text="${quantidadeVendas + ' vendas'}"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon blue"><i class="fas fa-boxes-stacked"></i></div>
+                    <h3>Total Produtos</h3>
+                    <div class="value" th:text="${totalProdutos}">0</div>
+                    <div class="sub" th:text="'Valor stock: ' + ${valorStock} + ' MZN'"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon orange"><i class="fas fa-book"></i></div>
+                    <h3>Total Fiado</h3>
+                    <div class="value" th:text="${totalFiado + ' MZN'}">0 MZN</div>
+                    <div class="sub" th:text="${fiadosNaoPagos + ' fiados não pagos'}"></div>
+                </div>
+                <div class="stat-card" th:classappend="${produtosStockBaixo.size() > 0} ? '' : ''">
+                    <div class="icon red"><i class="fas fa-triangle-exclamation"></i></div>
+                    <h3>Stock Baixo</h3>
+                    <div class="value" th:text="${produtosStockBaixo.size()}">0</div>
+                    <div class="sub" th:text="${produtosSemStock.size() + ' sem stock'}"></div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="actions">
+                <a href="/stock/gestao" class="btn btn-primary"><i class="fas fa-plus"></i> Adicionar Stock</a>
+                <a href="/pdv" class="btn btn-primary"><i class="fas fa-cash-register"></i> Abrir PDV</a>
+                <button class="btn btn-warning" onclick="window.print()"><i class="fas fa-print"></i> Imprimir Relatório</button>
+            </div>
+
+            <div class="two-cols">
+                <!-- Últimas Vendas -->
+                <div class="card">
+                    <h3><i class="fas fa-receipt"></i> Últimas Vendas</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vendedor</th>
+                                <th>Valor</th>
+                                <th>Pagamento</th>
+                                <th>Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="venda : ${vendas}">
+                                <td th:text="${venda.vendedorId}">ID</td>
+                                <td th:text="${venda.total + ' MZN'}">0 MZN</td>
+                                <td>
+                                    <span class="badge badge-info" th:text="${venda.metodoPagamento}">CASH</span>
+                                </td>
+                                <td th:text="${#temporals.format(venda.dataHora, 'HH:mm')}">00:00</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(vendas)}">
+                                <td colspan="4" style="text-align: center; color: #999;">Nenhuma venda hoje</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Alertas Recentes -->
+                <div class="card">
+                    <h3><i class="fas fa-bell"></i> Alertas Recentes</h3>
+                    <div th:each="alerta : ${alertas}" class="alert-item" th:classappend="${alerta.severidade.name() == 'CRITICA'} ? ' critical' : ''">
+                        <div th:text="${alerta.descricao}">Descrição do alerta</div>
+                        <div class="time" th:text="${#temporals.format(alerta.criadoEm, 'dd/MM HH:mm')}"></div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(alertas)}" style="text-align: center; color: #999; padding: 20px;">
+                        ✅ Sem alertas
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ranking Vendedores -->
+            <div class="card" th:if="${not #lists.isEmpty(rankingVendedores)}">
+                <h3><i class="fas fa-trophy"></i> Ranking Vendedores (Hoje)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Vendedor</th>
+                            <th>Vendas</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="rank, iterStat : ${rankingVendedores}">
+                            <td>
+                                <span th:if="${iterStat.index == 0}">🥇</span>
+                                <span th:if="${iterStat.index == 1}">🥈</span>
+                                <span th:if="${iterStat.index == 2}">🥉</span>
+                                <span th:if="${iterStat.index > 2}" th:text="${iterStat.index + 1}"></span>
+                            </td>
+                            <td th:text="${rank[0]}">Vendedor ID</td>
+                            <td th:text="${rank[1]}">0</td>
+                            <td th:text="${rank[2] + ' MZN'}">0 MZN</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Produtos Stock Baixo -->
+            <div class="card" th:if="${not #lists.isEmpty(produtosStockBaixo)}">
+                <h3><i class="fas fa-exclamation-triangle"></i> Produtos com Stock Baixo</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Stock Atual</th>
+                            <th>Mínimo</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="prod : ${produtosStockBaixo}">
+                            <td th:text="${prod.nome}">Produto</td>
+                            <td th:text="${prod.stockAtual}">0</td>
+                            <td th:text="${prod.stockMinimo}">0</td>
+                            <td>
+                                <span th:if="${prod.stockAtual == 0}" class="badge badge-danger">SEM STOCK</span>
+                                <span th:if="${prod.stockAtual > 0}" class="badge badge-warning">BAIXO</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

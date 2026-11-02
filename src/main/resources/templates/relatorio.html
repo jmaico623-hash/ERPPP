@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Vendas - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-leaf"></i> NanoBanana ERP</div>
+        <div class="user-info">
+            <span class="badge-plano" th:text="${session.plano}"></span>
+            <span class="merchant-name" th:text="${session.clienteNegocio}"></span>
+            <span class="client-name" th:text="${session.clienteNome}"></span>
+            <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/dashboard"><i class="fas fa-home"></i> Painel</a></li>
+                <li><a href="/vendas"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
+                <li><a href="/vendas/historico"><i class="fas fa-history"></i> Histórico</a></li>
+                <li class="active"><a href="/vendas/relatorio"><i class="fas fa-chart-bar"></i> Relatório</a></li>
+                <li><a href="/fiados"><i class="fas fa-book-open"></i> Fiado</a></li>
+                <li><a href="/inventario"><i class="fas fa-boxes"></i> Inventário</a></li>
+                <li><a href="/estagnados"><i class="fas fa-hourglass-end"></i> Estagnados</a></li>
+                <li><a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a></li>
+            </ul>
+        </aside>
+        <main class="content">
+            <h1>📊 Relatório de Vendas</h1>
+
+            <!-- Filtro por Período -->
+            <div class="periodo-filtro">
+                <a th:href="@{/vendas/relatorio(periodo='hoje')}" th:class="${periodo == 'hoje' || periodo == null ? 'btn-periodo active' : 'btn-periodo'}">📅 Hoje</a>
+                <a th:href="@{/vendas/relatorio(periodo='semana')}" th:class="${periodo == 'semana' ? 'btn-periodo active' : 'btn-periodo'}">📆 Esta Semana</a>
+                <a th:href="@{/vendas/relatorio(periodo='mes')}" th:class="${periodo == 'mes' ? 'btn-periodo active' : 'btn-periodo'}">🗓️ Este Mês</a>
+            </div>
+
+            <h2 th:text="${periodoLabel}"></h2>
+
+            <!-- Cards de Resumo -->
+            <div class="stats-grid relatorio-stats">
+                <div class="stat-card">
+                    <h3>💰 Total Vendas</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalVendas, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📝 Nº de Vendas</h3>
+                    <p class="stat-value" th:text="${totalVendasCount}">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📊 Média por Venda</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(mediaVenda, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📖 Vendas Fiado</h3>
+                    <p class="stat-value" th:text="${vendasFiado}">0</p>
+                </div>
+            </div>
+
+            <!-- Formas de Pagamento -->
+            <div class="relatorio-secao">
+                <h3>💳 Formas de Pagamento</h3>
+                <table class="nano-table">
+                    <thead>
+                        <tr><th>Forma</th><th>Qtd</th><th>Valor Total</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="entry : ${porFormaPagamento}">
+                            <td>
+                                <span th:switch="${entry.key}">
+                                    <span th:case="'cash'">💵 Cash</span>
+                                    <span th:case="'mpesa'">📱 M-Pesa</span>
+                                    <span th:case="'emola'">📱 e-Mola</span>
+                                    <span th:case="'cartao'">💳 Cartão</span>
+                                    <span th:case="*">💵 Cash</span>
+                                </span>
+                            </td>
+                            <td th:text="${entry.value}"></td>
+                            <td th:text="${#numbers.formatDecimal(valorPorFormaPagamento[entry.key], 1, 2)} + ' MZN'"></td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(porFormaPagamento)}">
+                            <td colspan="3" style="text-align:center;">Sem dados para este período.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Top Produtos -->
+            <div class="relatorio-secao">
+                <h3>🏆 Top Produtos Mais Vendidos</h3>
+                <table class="nano-table">
+                    <thead>
+                        <tr><th>#</th><th>Produto</th><th>Qtd Vendida</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="entry, iterStat : ${topProdutos}">
+                            <td th:text="${iterStat.count}"></td>
+                            <td th:text="${entry.key}"></td>
+                            <td th:text="${entry.value}"></td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(topProdutos)}">
+                            <td colspan="3" style="text-align:center;">Sem vendas neste período.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Fiado Pendente -->
+            <div class="relatorio-secao" th:if="${totalFiado > 0}">
+                <h3>📖 Fiado Pendente</h3>
+                <div class="total-pendente">
+                    💸 Total fiado neste período: <strong th:text="${#numbers.formatDecimal(totalFiado, 1, 2)} + ' MZN'"></strong>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

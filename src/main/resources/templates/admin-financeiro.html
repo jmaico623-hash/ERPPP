@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-admin">
+        <div class="logo"><i class="fas fa-shield-alt"></i> Admin</div>
+        <div class="user-info"><span th:text="${session.adminNome}"></span><a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a></div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/vendas"><i class="fas fa-shopping-cart"></i> Vendas Globais</a></li>
+                <li><a href="/admin/ranking"><i class="fas fa-trophy"></i> Ranking</a></li>
+                <li class="active"><a href="/admin/financeiro"><i class="fas fa-chart-line"></i> Financeiro</a></li>
+                <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
+                <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
+                <li><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+            </ul>
+        </aside>
+        <main class="content admin-content" style="width:100%;">
+            <h1>📈 Relatório Financeiro</h1>
+            <div class="stats-grid">
+                <div class="stat-card"><h3><i class="fas fa-coins"></i> Receita 12 Meses</h3><p class="stat-value" th:text="${#numbers.formatDecimal(receitaTotal, 1, 2)} + ' MZN'">0</p></div>
+                <div class="stat-card"><h3><i class="fas fa-chart-bar"></i> Média Mensal</h3><p class="stat-value" th:text="${#numbers.formatDecimal(mediaMensal, 1, 2)} + ' MZN'">0</p></div>
+            </div>
+            <h2>Receita Mensal</h2>
+            <table class="nano-table">
+                <thead><tr><th>Mês</th><th>Receita</th></tr></thead>
+                <tbody>
+                    <tr th:each="entry : ${receitaMensal}">
+                        <td th:text="${entry.key}"></td>
+                        <td th:text="${#numbers.formatDecimal(entry.value, 1, 2)} + ' MZN'" style="font-weight:600;color:#2ECC71;"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>

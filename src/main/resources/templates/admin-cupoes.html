@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cupões - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-admin">
+        <div class="logo"><i class="fas fa-shield-alt"></i> Admin</div>
+        <div class="user-info"><span th:text="${session.adminNome}"></span><a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a></div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/vendas"><i class="fas fa-shopping-cart"></i> Vendas Globais</a></li>
+                <li><a href="/admin/ranking"><i class="fas fa-trophy"></i> Ranking</a></li>
+                <li><a href="/admin/financeiro"><i class="fas fa-chart-line"></i> Financeiro</a></li>
+                <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
+                <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
+                <li class="active"><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+            </ul>
+        </aside>
+        <main class="content admin-content" style="width:100%;">
+            <h1>🎁 Cupões de Desconto</h1>
+            <div class="assinatura-card">
+                <h2>Criar Novo Cupão</h2>
+                <form action="/admin/cupao/criar" method="post" class="inline-form">
+                    <input type="text" name="codigo" placeholder="Código (ex: PROMO10)" required>
+                    <input type="number" name="descontoPercent" placeholder="% Desconto" min="1" max="100" required>
+                    <select name="clienteId">
+                        <option value="">Todos os clientes</option>
+                        <option th:each="c : ${clientes}" th:value="${c.id}" th:text="${c.nomeNegocio}"></option>
+                    </select>
+                    <button type="submit" class="btn-success"><i class="fas fa-plus"></i> Criar Cupão</button>
+                </form>
+            </div>
+            <p style="color:#7f8c8d;margin-top:20px;">⚠️ Cupões são registados mas ainda não aplicados automaticamente nas vendas.</p>
+        </main>
+    </div>
+</body>
+</html>

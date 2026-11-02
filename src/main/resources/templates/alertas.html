@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .logo { font-size: 20px; font-weight: 600; }
+        .navbar .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .navbar a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-size: 28px; color: #333; }
+        .alert-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 5px solid #ffc107;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+        .alert-item.critical { border-left-color: #dc3545; background: #fff5f5; }
+        .alert-item.high { border-left-color: #ff9800; }
+        .alert-item .content { flex: 1; }
+        .alert-item .type { font-weight: 600; color: #333; margin-bottom: 5px; }
+        .alert-item .desc { color: #666; font-size: 14px; margin-bottom: 10px; }
+        .alert-item .time { font-size: 12px; color: #999; }
+        .alert-item .actions { display: flex; gap: 10px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px; cursor: pointer; }
+        .btn-success { background: #4caf50; color: white; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-critical { background: #ffebee; color: #dc3545; }
+        .badge-high { background: #fff3e0; color: #ff9800; }
+        .badge-medium { background: #e3f2fd; color: #2196f3; }
+        .badge-low { background: #e8f5e9; color: #4caf50; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><i class="fas fa-bell"></i> Alertas - NanoBanana</div>
+        <div class="user-info">
+            <span>👑 <span th:text="${usuario.nome}">Dono</span></span>
+            <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🔔 Alertas do Sistema</h1>
+            <p>Detecção automática de anomalias e desvios</p>
+        </div>
+
+        <div th:each="alerta : ${alertas}" class="alert-item"
+             th:classappend="${alerta.severidade.name() == 'CRITICA'} ? ' critical' : (${alerta.severidade.name() == 'ALTA'} ? ' high' : '')">
+            <div class="content">
+                <div class="type">
+                    <span th:text="${alerta.tipo}">Tipo</span>
+                    <span th:if="${alerta.severidade.name() == 'CRITICA'}" class="badge badge-critical">CRÍTICO</span>
+                    <span th:if="${alerta.severidade.name() == 'ALTA'}" class="badge badge-high">ALTO</span>
+                    <span th:if="${alerta.severidade.name() == 'MEDIA'}" class="badge badge-medium">MÉDIO</span>
+                    <span th:if="${alerta.severidade.name() == 'BAIXA'}" class="badge badge-low">BAIXO</span>
+                </div>
+                <div class="desc" th:text="${alerta.descricao}">Descrição</div>
+                <div class="time" th:text="${#temporals.format(alerta.criadoEm, 'dd/MM/yyyy HH:mm')}">-</div>
+            </div>
+            <div class="actions">
+                <form th:if="${!alerta.resolvido}" th:action="@{'/alertas/' + ${alerta.id} + '/resolver'}" method="POST">
+                    <button type="submit" class="btn btn-success">✅ Resolver</button>
+                </form>
+                <span th:if="${alerta.resolvido}" class="badge badge-low">Resolvido</span>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(alertas)}" style="text-align: center; padding: 60px 20px; background: white; border-radius: 12px;">
+            <i class="fas fa-check-circle" style="font-size: 48px; color: #4caf50;"></i>
+            <h3 style="margin-top: 15px; color: #333;">Sem alertas</h3>
+            <p style="color: #666;">Tudo está sob controle! 🎉</p>
+        </div>
+    </div>
+</body>
+</html>

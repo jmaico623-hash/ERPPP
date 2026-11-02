@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Stock - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .navbar {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar .logo { font-size: 20px; font-weight: 600; }
+        .navbar .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .navbar a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar {
+            width: 250px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            padding: 20px 0;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #555;
+            text-decoration: none;
+            font-size: 15px;
+        }
+        .sidebar a:hover { background: #f0f4ff; color: #667eea; }
+        .sidebar a.active { background: #667eea; color: white; }
+        .sidebar a i { width: 20px; text-align: center; }
+        .main { flex: 1; padding: 30px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-size: 28px; color: #333; margin-bottom: 5px; }
+        .page-header p { color: #666; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: #666;
+        }
+        .tab.active { border-bottom-color: #667eea; color: #667eea; }
+        .tab:hover { color: #667eea; }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .card h3 { font-size: 18px; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .card h3 i { color: #667eea; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; font-size: 13px; color: #666; border-bottom: 2px solid #e0e0e0; background: #f9f9f9; }
+        td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f9f9f9; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success { background: #e8f5e9; color: #4caf50; }
+        .badge-warning { background: #fff3e0; color: #ff9800; }
+        .badge-danger { background: #ffebee; color: #f44336; }
+        .badge-info { background: #e3f2fd; color: #2196f3; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 13px; font-weight: 500; color: #555; }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-success { background: #4caf50; color: white; }
+        .btn-warning { background: #ff9800; color: white; }
+
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: #efe; color: #090; border: 1px solid #cfc; }
+        .alert-error { background: #fee; color: #c00; border: 1px solid #fcc; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal h3 { margin-bottom: 20px; }
+        .modal .actions { display: flex; gap: 10px; margin-top: 20px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><i class="fas fa-shield-alt"></i> NanoBanana ERP - Gestão Stock</div>
+        <div class="user-info">
+            <span><i class="fas fa-crown" style="color: gold;"></i> <span th:text="${usuario.nome}">Dono</span></span>
+            <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/pdv"><i class="fas fa-cash-register"></i> PDV</a>
+            <a href="/pdv/historico"><i class="fas fa-history"></i> Histórico</a>
+            <div style="height: 1px; background: #e0e0e0; margin: 15px 0;"></div>
+            <a href="/stock/gestao" class="active"><i class="fas fa-boxes-stacked"></i> Gestão Stock</a>
+            <a href="/alertas"><i class="fas fa-bell"></i> Alertas</a>
+            <div style="height: 1px; background: #e0e0e0; margin: 15px 0;"></div>
+            <a href="/fiados"><i class="fas fa-book"></i> Fiados</a>
+        </div>
+
+        <div class="main">
+            <div class="page-header">
+                <h1>📦 Gestão de Stock</h1>
+                <p>Apenas o DONO pode adicionar ou remover stock</p>
+            </div>
+
+            <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+            <div th:if="${erro}" class="alert alert-error" th:text="${erro}"></div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('produtos')">📦 Produtos</div>
+                <div class="tab" onclick="switchTab('entrada')">➕ Entrada Stock</div>
+                <div class="tab" onclick="switchTab('baixa')">➖ Baixa Stock</div>
+                <div class="tab" onclick="switchTab('historico')">📋 Histórico</div>
+            </div>
+
+            <!-- Tab: Produtos -->
+            <div id="tab-produtos" class="tab-content active">
+                <div class="card">
+                    <h3><i class="fas fa-boxes-stacked"></i> Produtos Cadastrados</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Categoria</th>
+                                <th>Preço Custo</th>
+                                <th>Preço Venda</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="prod : ${produtos}">
+                                <td th:text="${prod.nome}">Produto</td>
+                                <td th:text="${prod.categoria}">-</td>
+                                <td th:text="${prod.precoCusto != null ? prod.precoCusto + ' MZN' : '-'}">-</td>
+                                <td th:text="${prod.precoVenda + ' MZN'}">0 MZN</td>
+                                <td th:text="${prod.stockAtual}">0</td>
+                                <td>
+                                    <span th:if="${prod.stockAtual == 0}" class="badge badge-danger">SEM STOCK</span>
+                                    <span th:if="${prod.stockAtual > 0 and prod.stockBaixo()}" class="badge badge-warning">BAIXO</span>
+                                    <span th:if="${prod.stockAtual > prod.stockMinimo}" class="badge badge-success">Normal</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Add Product Form -->
+                <div class="card">
+                    <h3><i class="fas fa-plus"></i> Adicionar Novo Produto</h3>
+                    <form method="POST" action="/stock/produto/adicionar">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nome do Produto</label>
+                                <input type="text" name="nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Código de Barras</label>
+                                <input type="text" name="codigoBarras">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <input type="text" name="categoria">
+                            </div>
+                            <div class="form-group">
+                                <label>Preço Custo (MZN)</label>
+                                <input type="number" name="precoCusto" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label>Preço Venda (MZN)</label>
+                                <input type="number" name="precoVenda" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Stock Inicial</label>
+                                <input type="number" name="stockInicial" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Stock Mínimo</label>
+                                <input type="number" name="stockMinimo" value="5" min="1">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i> Adicionar Produto</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab: Entrada Stock -->
+            <div id="tab-entrada" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-plus-circle" style="color: #4caf50;"></i> Registrar Entrada de Stock</h3>
+                    <p style="color: #666; margin-bottom: 20px;">Esta ação aumenta o stock do produto. Apenas o DONO pode fazer isto.</p>
+                    <form method="POST" action="/stock/adicionar">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Produto</label>
+                                <select name="produtoId" required>
+                                    <option value="">Selecione...</option>
+                                    <option th:each="prod : ${produtos}" th:value="${prod.id}" th:text="${prod.nome + ' (Stock: ' + prod.stockAtual + ')'}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantidade</label>
+                                <input type="number" name="quantidade" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fornecedor</label>
+                                <input type="text" name="fornecedor" placeholder="Nome do fornecedor">
+                            </div>
+                            <div class="form-group">
+                                <label>Nota Fiscal</label>
+                                <input type="text" name="notaFiscal" placeholder="Número da nota/fatura">
+                            </div>
+                            <div class="form-group">
+                                <label>Preço Custo Unitário (MZN)</label>
+                                <input type="number" name="precoCusto" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>Motivo/Observações</label>
+                            <textarea name="motivo" rows="2" placeholder="Porquê esta entrada?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i> Registrar Entrada</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab: Baixa Stock -->
+            <div id="tab-baixa" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-minus-circle" style="color: #f44336;"></i> Registrar Baixa de Stock</h3>
+                    <p style="color: #666; margin-bottom: 20px;">⚠️ Esta ação reduz o stock do produto. MOTIVO É OBRIGATÓRIO.</p>
+                    <form method="POST" action="/stock/baixar">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Produto</label>
+                                <select name="produtoId" required>
+                                    <option value="">Selecione...</option>
+                                    <option th:each="prod : ${produtos}" th:value="${prod.id}" th:text="${prod.nome + ' (Stock: ' + prod.stockAtual + ')'}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Quantidade</label>
+                                <input type="number" name="quantidade" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo de Baixa</label>
+                                <select name="tipoBaixa" required>
+                                    <option value="PERDA">🔴 Produto Perdido</option>
+                                    <option value="VALIDADE">🔴 Produto Vencido</option>
+                                    <option value="QUEBRA">🔴 Produto Quebrado</option>
+                                    <option value="ROUBO">🔴 Roubo</option>
+                                    <option value="AJUSTE">🟡 Ajuste de Inventário</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label>Motivo (OBRIGATÓRIO)</label>
+                            <textarea name="motivo" rows="3" placeholder="Explique porquê esta baixa..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-minus"></i> Registrar Baixa</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab: Histórico -->
+            <div id="tab-historico" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-arrow-down" style="color: #4caf50;"></i> Últimas Entradas de Stock</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Fornecedor</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="entrada : ${entradas}">
+                                <td th:text="${#temporals.format(entrada.dataEntrada, 'dd/MM/yyyy HH:mm')}">-</td>
+                                <td th:text="${entrada.produtoId}">-</td>
+                                <td><span class="badge badge-success" th:text="'+' + ${entrada.quantidade}"></span></td>
+                                <td th:text="${entrada.fornecedor != null ? entrada.fornecedor : '-'}">-</td>
+                                <td th:text="${entrada.motivo != null ? entrada.motivo : '-'}">-</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(entradas)}">
+                                <td colspan="5" style="text-align: center; color: #999;">Nenhuma entrada registrada</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-arrow-up" style="color: #f44336;"></i> Últimas Baixas de Stock</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Tipo</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="baixa : ${baixas}">
+                                <td th:text="${#temporals.format(baixa.dataBaixa, 'dd/MM/yyyy HH:mm')}">-</td>
+                                <td th:text="${baixa.produtoId}">-</td>
+                                <td><span class="badge badge-danger" th:text="'-' + ${baixa.quantidade}"></span></td>
+                                <td><span class="badge badge-warning" th:text="${baixa.tipoBaixa}"></span></td>
+                                <td th:text="${baixa.motivo}">-</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(baixas)}">
+                                <td colspan="5" style="text-align: center; color: #999;">Nenhuma baixa registrada</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Remove active from all tabs and content
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Add active to selected
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+    </script>
+</body>
+</html>

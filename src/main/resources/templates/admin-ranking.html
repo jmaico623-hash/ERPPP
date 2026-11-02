@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-admin">
+        <div class="logo"><i class="fas fa-shield-alt"></i> Admin</div>
+        <div class="user-info"><span th:text="${session.adminNome}"></span><a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a></div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/vendas"><i class="fas fa-shopping-cart"></i> Vendas Globais</a></li>
+                <li class="active"><a href="/admin/ranking"><i class="fas fa-trophy"></i> Ranking</a></li>
+                <li><a href="/admin/financeiro"><i class="fas fa-chart-line"></i> Financeiro</a></li>
+                <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
+                <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
+                <li><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+            </ul>
+        </aside>
+        <main class="content admin-content" style="width:100%;">
+            <h1>🏆 Ranking de Lojas — Este Mês</h1>
+            <table class="nano-table">
+                <thead><tr><th>#</th><th>Loja</th><th>Responsável</th><th>Vendas (Mês)</th><th>Qtd Vendas</th><th>Fiado Pendente</th></tr></thead>
+                <tbody>
+                    <tr th:each="r, iterStat : ${ranking}" th:classappend="${iterStat.index < 3 ? 'top3' : ''}">
+                        <td>
+                            <span th:if="${iterStat.index == 0}">🥇</span>
+                            <span th:if="${iterStat.index == 1}">🥈</span>
+                            <span th:if="${iterStat.index == 2}">🥉</span>
+                            <span th:if="${iterStat.index > 2}" th:text="${iterStat.count}"></span>
+                        </td>
+                        <td th:text="${r.cliente.nomeNegocio}" style="font-weight:600;"></td>
+                        <td th:text="${r.cliente.nome}"></td>
+                        <td th:text="${#numbers.formatDecimal(r.vendasMes, 1, 2)} + ' MZN'" style="color:#2ECC71;font-weight:700;"></td>
+                        <td th:text="${r.qtdVendas}"></td>
+                        <td><span th:if="${r.totalFiado > 0}" style="color:#E74C3C;" th:text="${#numbers.formatDecimal(r.totalFiado, 1, 2)} + ' MZN'"></span><span th:unless="${r.totalFiado > 0}" style="color:#27AE60;">✅ 0 MZN</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+    <style>.top3 { background: #FEF9E7 !important; }</style>
+</body>
+</html>

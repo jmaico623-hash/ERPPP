@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funcionários - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .logo { font-size: 20px; font-weight: 600; }
+        .navbar .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .navbar a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
+        .container { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar { width: 250px; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.05); padding: 20px 0; }
+        .sidebar a { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #555; text-decoration: none; font-size: 15px; }
+        .sidebar a:hover { background: #f0f4ff; color: #667eea; }
+        .sidebar a.active { background: #667eea; color: white; }
+        .sidebar a i { width: 20px; text-align: center; }
+        .main { flex: 1; padding: 30px; }
+        .page-header { margin-bottom: 30px; }
+        .page-header h1 { font-size: 28px; color: #333; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card h3 { font-size: 18px; color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; font-size: 13px; color: #666; border-bottom: 2px solid #e0e0e0; background: #f9f9f9; }
+        td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f9f9f9; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #e8f5e9; color: #4caf50; }
+        .badge-danger { background: #ffebee; color: #f44336; }
+        .badge-info { background: #e3f2fd; color: #2196f3; }
+        .badge-warning { background: #fff3e0; color: #ff9800; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-success { background: #4caf50; color: white; }
+        .btn-warning { background: #ff9800; color: white; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: #efe; color: #090; border: 1px solid #cfc; }
+        .alert-error { background: #fee; color: #c00; border: 1px solid #fcc; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 13px; font-weight: 500; color: #555; }
+        .form-group input, .form-group select { padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; }
+        .modal h3 { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><i class="fas fa-shield-alt"></i> NanoBanana ERP</div>
+        <div class="user-info">
+            <span>👑 <span th:text="${usuario.nome}">Dono</span></span>
+            <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/pdv"><i class="fas fa-cash-register"></i> PDV</a>
+            <a href="/pdv/historico"><i class="fas fa-history"></i> Histórico</a>
+            <div style="height: 1px; background: #e0e0e0; margin: 15px 0;"></div>
+            <a href="/stock/gestao"><i class="fas fa-boxes-stacked"></i> Gestão Stock</a>
+            <a href="/funcionarios" class="active"><i class="fas fa-users"></i> Funcionários</a>
+            <a href="/alertas"><i class="fas fa-bell"></i> Alertas</a>
+            <div style="height: 1px; background: #e0e0e0; margin: 15px 0;"></div>
+            <a href="/fiados"><i class="fas fa-book"></i> Fiados</a>
+        </div>
+
+        <div class="main">
+            <div class="page-header">
+                <h1>👥 Gestão de Funcionários</h1>
+                <p>Crie e gerencie os funcionários da sua loja</p>
+            </div>
+
+            <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+            <div th:if="${erro}" class="alert alert-error" th:text="${erro}"></div>
+
+            <!-- Criar Funcionário -->
+            <div class="card">
+                <h3><i class="fas fa-user-plus"></i> Criar Novo Funcionário</h3>
+                <form method="POST" action="/funcionarios/criar">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nome Completo</label>
+                            <input type="text" name="nome" placeholder="Ex: João da Silva" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email (será o login)</label>
+                            <input type="email" name="email" placeholder="funcionario@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Senha Temporária</label>
+                            <input type="password" name="senha" placeholder="Mínimo 4 caracteres" required minlength="4">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefone</label>
+                            <input type="text" name="telefone" placeholder="841234567">
+                        </div>
+                        <div class="form-group">
+                            <label>Função</label>
+                            <select name="role" required>
+                                <option value="VENDEDOR">💰 Vendedor (apenas vende)</option>
+                                <option value="GERENTE">👔 Gerente (vende + relatórios)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-user-plus"></i> Criar Funcionário</button>
+                </form>
+            </div>
+
+            <!-- Lista de Funcionários -->
+            <div class="card">
+                <h3><i class="fas fa-users"></i> Funcionários Cadastrados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Função</th>
+                            <th>Telefone</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="func : ${funcionarios}">
+                            <td>
+                                <strong th:text="${func.nome}">Nome</strong>
+                                <div style="font-size: 12px; color: #999;" th:if="${func.id == usuario.id}">(você)</div>
+                            </td>
+                            <td th:text="${func.email}">email</td>
+                            <td>
+                                <span th:if="${func.role.name() == 'DONO'}" class="badge badge-info">👑 Dono</span>
+                                <span th:if="${func.role.name() == 'GERENTE'}" class="badge badge-warning">👔 Gerente</span>
+                                <span th:if="${func.role.name() == 'VENDEDOR'}" class="badge badge-success">💰 Vendedor</span>
+                            </td>
+                            <td th:text="${func.telefone != null ? func.telefone : '-'}">-</td>
+                            <td>
+                                <span th:if="${func.ativo}" class="badge badge-success">✅ Ativo</span>
+                                <span th:if="${!func.ativo}" class="badge badge-danger">❌ Inativo</span>
+                                <span th:if="${func.bloqueado}" class="badge badge-danger">🔒 Bloqueado</span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button th:if="${func.ativo && func.id != usuario.id}" class="btn btn-danger" 
+                                            onclick="confirmarAcao('desativar', this)" 
+                                            th:data-id="${func.id}">
+                                        <i class="fas fa-ban"></i> Desativar
+                                    </button>
+                                    <button th:if="${!func.ativo}" class="btn btn-success"
+                                            onclick="confirmarAcao('reativar', this)"
+                                            th:data-id="${func.id}">
+                                        <i class="fas fa-check"></i> Reativar
+                                    </button>
+                                    <button class="btn btn-warning"
+                                            onclick="abrirResetSenha(this)"
+                                            th:data-id="${func.id}" th:data-nome="${func.nome}">
+                                        <i class="fas fa-key"></i> Reset Senha
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(funcionarios)}">
+                            <td colspan="6" style="text-align: center; color: #999; padding: 40px;">
+                                Nenhum funcionário cadastrado
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Info Anti-Roubo -->
+            <div class="card" style="background: #f0f4ff; border: 1px solid #667eea;">
+                <h3 style="color: #667eea;"><i class="fas fa-shield-alt"></i> Como o Sistema Protege contra Roubo</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                    <div>
+                        <h4 style="color: #333; margin-bottom: 5px;">🔒 Stock Controlado</h4>
+                        <p style="font-size: 13px; color: #555;">Apenas VOCÊ pode adicionar ou remover stock. Vendedores apenas vendem.</p>
+                    </div>
+                    <div>
+                        <h4 style="color: #333; margin-bottom: 5px;">📊 Tudo Registrado</h4>
+                        <p style="font-size: 13px; color: #555;">Cada venda, cancelamento e acesso é registrado com data/hora.</p>
+                    </div>
+                    <div>
+                        <h4 style="color: #333; margin-bottom: 5px;">⚠️ Alertas Automáticos</h4>
+                        <p style="font-size: 13px; color: #555;">Se stock físico ≠ stock sistema, você recebe alerta imediato.</p>
+                    </div>
+                    <div>
+                        <h4 style="color: #333; margin-bottom: 5px;">🔍 Detecção de Desvios</h4>
+                        <p style="font-size: 13px; color: #555;">O sistema calcula: Stock inicial - Vendas = Stock esperado. Se diferente → ALERTA!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reset Senha -->
+    <div class="modal-overlay" id="modalSenha">
+        <div class="modal">
+            <h3><i class="fas fa-key"></i> Reset de Senha</h3>
+            <p style="color: #666; margin-bottom: 15px;">Funcionário: <strong id="nomeFuncionario">-</strong></p>
+            <form id="formSenha" method="POST">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Nova Senha</label>
+                    <input type="password" name="novaSenha" placeholder="Nova senha temporária" required minlength="4">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirmar</button>
+                    <button type="button" class="btn btn-danger" onclick="fecharModal()"><i class="fas fa-times"></i> Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function confirmarAcao(acao, el) {
+            const id = el.dataset.id;
+            const nome = el.closest('tr').querySelector('td:first-child strong').textContent;
+            
+            if (confirm(`${acao === 'desativar' ? 'Desativar' : 'Reativar'} ${nome}?`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/funcionarios/${id}/${acao}`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function abrirResetSenha(el) {
+            const id = el.dataset.id;
+            const nome = el.dataset.nome;
+            document.getElementById('nomeFuncionario').textContent = nome;
+            document.getElementById('formSenha').action = `/funcionarios/${id}/reset-senha`;
+            document.getElementById('modalSenha').classList.add('active');
+        }
+
+        function fecharModal() {
+            document.getElementById('modalSenha').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

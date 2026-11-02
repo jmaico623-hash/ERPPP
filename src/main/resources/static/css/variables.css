@@ -1,0 +1,184 @@
+/* NanoBanana ERP - CSS Variables (Design System) */
+/* Importado em todas as páginas via layout.html */
+
+:root {
+    /* Cores Principais */
+    --primary: #27ae60;
+    --primary-dark: #1e8a49;
+    --primary-light: #e8f8f0;
+    --primary-lighter: #f0fdf4;
+    
+    --secondary: #667eea;
+    --secondary-dark: #5568d3;
+    --secondary-light: #eef0fc;
+    
+    /* Cores Semânticas */
+    --success: #27ae60;
+    --success-light: #e8f8f0;
+    --success-lighter: #f0fdf4;
+    
+    --danger: #e74c3c;
+    --danger-light: #fdecea;
+    --danger-lighter: #fef0f0;
+    
+    --warning: #f39c12;
+    --warning-light: #fff8e1;
+    --warning-lighter: #fffdf5;
+    
+    --info: #3498db;
+    --info-light: #e8f4fd;
+    --info-lighter: #f0f8ff;
+    
+    /* Neutros */
+    --white: #ffffff;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    --gray-950: #020617;
+    
+    /* Layout */
+    --bg: var(--gray-50);
+    --card-bg: var(--white);
+    --sidebar-bg: var(--white);
+    --navbar-bg: linear-gradient(135deg, var(--primary) 0%, #2ecc71 100%);
+    
+    --text: var(--gray-900);
+    --text-muted: var(--gray-500);
+    --text-light: var(--gray-400);
+    
+    --border: var(--gray-200);
+    --border-light: var(--gray-100);
+    --border-dark: var(--gray-300);
+    
+    /* Espaçamento */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    
+    /* Border Radius */
+    --radius: 8px;
+    --radius-sm: 6px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+    
+    /* Shadows */
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+    --shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04);
+    --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.06);
+    
+    /* Transitions */
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Layout Dimensions */
+    --sidebar-width: 260px;
+    --sidebar-collapsed: 72px;
+    --navbar-height: 64px;
+    --footer-height: 80px;
+    
+    /* Z-index scale */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-fixed: 300;
+    --z-modal-backdrop: 400;
+    --z-modal: 500;
+    --z-popover: 600;
+    --z-tooltip: 700;
+    --z-toast: 800;
+    
+    /* Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    
+    --text-xs: 0.75rem;    /* 12px */
+    --text-sm: 0.875rem;   /* 14px */
+    --text-base: 1rem;     /* 16px */
+    --text-lg: 1.125rem;   /* 18px */
+    --text-xl: 1.25rem;    /* 20px */
+    --text-2xl: 1.5rem;    /* 24px */
+    --text-3xl: 1.875rem;  /* 30px */
+    --text-4xl: 2.25rem;   /* 36px */
+    
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+}
+
+/* Dark mode support (opcional - ativado via JS) */
+[data-theme="dark"] {
+    --bg: var(--gray-900);
+    --card-bg: var(--gray-800);
+    --sidebar-bg: var(--gray-800);
+    --navbar-bg: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    
+    --text: var(--gray-100);
+    --text-muted: var(--gray-400);
+    --text-light: var(--gray-500);
+    
+    --border: var(--gray-700);
+    --border-light: var(--gray-800);
+    --border-dark: var(--gray-600);
+    
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* Print styles */
+@media print {
+    .navbar, .sidebar, .footer, .btn, .alert-close { display: none !important; }
+    .main-content { margin-left: 0 !important; padding-top: 0 !important; }
+    .page-content { padding: 0 !important; max-width: none !important; }
+    body { background: white !important; }
+    .card, .table { box-shadow: none !important; border: 1px solid var(--border) !important; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Focus visible para acessibilidade */
+:focus:not(:focus-visible) { outline: none; }
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Selection */
+::selection { background: var(--primary-light); color: var(--primary-dark); }
+::-moz-selection { background: var(--primary-light); color: var(--primary-dark); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+::-webkit-scrollbar-corner { background: var(--bg); }
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--gray-600); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--gray-500); }

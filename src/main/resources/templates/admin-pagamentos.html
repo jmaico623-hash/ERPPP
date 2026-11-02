@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamentos - Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-admin">
+        <div class="logo"><i class="fas fa-shield-alt"></i> Admin</div>
+        <div class="user-info"><span th:text="${session.adminNome}"></span><a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a></div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="/admin/vendas"><i class="fas fa-shopping-cart"></i> Vendas Globais</a></li>
+                <li><a href="/admin/ranking"><i class="fas fa-trophy"></i> Ranking</a></li>
+                <li><a href="/admin/financeiro"><i class="fas fa-chart-line"></i> Financeiro</a></li>
+                <li class="active"><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
+                <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
+                <li><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+            </ul>
+        </aside>
+        <main class="content admin-content" style="width:100%;">
+            <h1>💳 Histórico de Pagamentos</h1>
+            <table class="nano-table">
+                <thead><tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Método</th><th>Referência</th><th>Data</th><th>Estado</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(pagamentos)}"><td colspan="7" style="text-align:center;">Sem pagamentos registados.</td></tr>
+                    <tr th:each="p : ${pagamentos}">
+                        <td th:text="${p.id}"></td>
+                        <td th:text="${clienteNomeMap[p.clienteId]} ?: 'N/A'"></td>
+                        <td th:text="${p.valor} + ' MZN'"></td>
+                        <td th:text="${p.metodo}"></td>
+                        <td th:text="${p.referencia}"></td>
+                        <td th:text="${p.data}"></td>
+                        <td>
+                            <span th:if="${p.confirmado}" class="badge badge-success">Confirmado</span>
+                            <span th:unless="${p.confirmado}" class="badge badge-warning">Pendente</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>

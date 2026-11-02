@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nanobanana-db
+    environment:
+      POSTGRES_DB: nanobanana
+      POSTGRES_USER: nano
+      POSTGRES_PASSWORD: ${DB_PASS:-nanobanana123}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d  # scripts de init opcionais
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nano -d nanobanana"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nanobanana-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nanobanana-app
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://postgres:5432/nanobanana
+      DB_USER: nano
+      DB_PASS: ${DB_PASS:-nanobanana123}
+      SESSION_COOKIE_SECURE: "false"  # true em produção com HTTPS
+      JAVA_OPTS: "-Xms512m -Xmx1024m -XX:+UseG1GC"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    networks:
+      - nanobanana-network
+    restart: unless-stopped
+
+  # Opcional: pgAdmin para gerenciar o banco
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nanobanana-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@nanobanana.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - nanobanana-network
+    profiles:
+      - tools  # só sobe com: docker-compose --profile tools up
+
+volumes:
+  pgdata:
+  pgadmin-data:
+
+networks:
+  nanobanana-network:
+    driver: bridge

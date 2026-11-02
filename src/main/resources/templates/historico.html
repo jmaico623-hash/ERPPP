@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Vendas - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-leaf"></i> NanoBanana ERP</div>
+        <div class="user-info">
+            <span class="badge-plano" th:text="${session.plano}"></span>
+            <span class="merchant-name" th:text="${session.clienteNegocio}"></span>
+            <span class="client-name" th:text="${session.clienteNome}"></span>
+            <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="/dashboard"><i class="fas fa-home"></i> Painel</a></li>
+                <li><a href="/vendas"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
+                <li class="active"><a href="/vendas/historico"><i class="fas fa-history"></i> Histórico</a></li>
+                <li><a href="/vendas/relatorio"><i class="fas fa-chart-bar"></i> Relatório</a></li>
+                <li><a href="/fiados"><i class="fas fa-book-open"></i> Fiado</a></li>
+                <li><a href="/inventario"><i class="fas fa-boxes"></i> Inventário</a></li>
+                <li><a href="/estagnados"><i class="fas fa-hourglass-end"></i> Estagnados</a></li>
+                <li><a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a></li>
+            </ul>
+        </aside>
+        <main class="content">
+            <h1>📋 Histórico de Vendas</h1>
+
+            <div th:if="${param.cancelada}" class="alert alert-success">
+                <i class="fas fa-check-circle"></i> Venda cancelada e stock devolvido!
+            </div>
+
+            <!-- Filtro por Período -->
+            <div class="periodo-filtro">
+                <a th:href="@{/vendas/historico(periodo='hoje')}" th:class="${periodo == 'hoje' || periodo == null ? 'btn-periodo active' : 'btn-periodo'}">📅 Hoje</a>
+                <a th:href="@{/vendas/historico(periodo='semana')}" th:class="${periodo == 'semana' ? 'btn-periodo active' : 'btn-periodo'}">📆 Esta Semana</a>
+                <a th:href="@{/vendas/historico(periodo='mes')}" th:class="${periodo == 'mes' ? 'btn-periodo active' : 'btn-periodo'}">🗓️ Este Mês</a>
+                <a th:href="@{/vendas/historico(periodo='todas')}" th:class="${periodo == 'todas' ? 'btn-periodo active' : 'btn-periodo'}">📊 Todas</a>
+            </div>
+
+            <div class="total-vendas-header">
+                <span th:text="${periodoLabel}"></span>
+                <span class="total-valor" th:text="${#numbers.formatDecimal(totalVendas, 1, 2)} + ' MZN'"></span>
+            </div>
+
+            <table class="nano-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Data</th>
+                        <th>Valor</th>
+                        <th>Pago</th>
+                        <th>Troco</th>
+                        <th>Desconto</th>
+                        <th>Pagamento</th>
+                        <th>Fiado</th>
+                        <th>Cliente</th>
+                        <th>Estado</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(vendas)}">
+                        <td colspan="11" style="text-align:center;">Nenhuma venda encontrada neste período.</td>
+                    </tr>
+                    <tr th:each="v : ${vendas}" th:class="${v.cancelada} ? 'venda-cancelada' : ''">
+                        <td th:text="${v.id}"></td>
+                        <td th:text="${v.data}"></td>
+                        <td th:text="${#numbers.formatDecimal(v.valor, 1, 2)} + ' MZN'"></td>
+                        <td th:text="${v.valorPago != null ? #numbers.formatDecimal(v.valorPago, 1, 2) + ' MZN' : '-'}"></td>
+                        <td>
+                            <span th:if="${v.troco != null && v.troco > 0}" class="troco-valor" th:text="${#numbers.formatDecimal(v.troco, 1, 2)} + ' MZN'"></span>
+                            <span th:unless="${v.troco != null && v.troco > 0}" style="color:#999;">-</span>
+                        </td>
+                        <td th:text="${v.desconto != null && v.desconto > 0 ? #numbers.formatDecimal(v.desconto, 1, 2) + ' MZN' : '-'}"></td>
+                        <td>
+                            <span th:switch="${v.formaPagamento}">
+                                <span th:case="'cash'">💵 Cash</span>
+                                <span th:case="'mpesa'">📱 M-Pesa</span>
+                                <span th:case="'emola'">📱 e-Mola</span>
+                                <span th:case="'cartao'">💳 Cartão</span>
+                                <span th:case="*">💵 Cash</span>
+                            </span>
+                        </td>
+                        <td>
+                            <span th:if="${v.fiado}" class="badge badge-warning">Sim</span>
+                            <span th:unless="${v.fiado}" class="badge badge-success">Não</span>
+                        </td>
+                        <td th:text="${v.nomeClienteFiado} ?: '-'"></td>
+                        <td>
+                            <span th:if="${v.cancelada}" class="badge badge-danger">❌ Cancelada</span>
+                            <span th:unless="${v.cancelada}" class="badge badge-success">✅ Concluída</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/vendas/cancelar/{id}(id=${v.id})}" method="post" style="display:inline;"
+                                  th:onsubmit="return confirm('Tem certeza que deseja cancelar esta venda? O stock será devolvido.')">
+                                <button type="submit" class="btn-sm btn-danger" th:if="${!v.cancelada}" title="Cancelar venda">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+</body>
+</html>
