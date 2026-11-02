@@ -18,7 +18,7 @@ fi
 if [ "$1" = "start" ]; then
     if [ -f "$JAR" ]; then
         echo "🚀 A iniciar servidor na porta $PORT..."
-        nohup java -jar $JAR --server.port=$PORT > nanobanana.log 2>&1 &
+        nohup java -jar $JAR --server.port=$PORT --spring.profiles.active=${SPRING_PROFILES_ACTIVE:-dev} > nanobanana.log 2>&1 &
         echo "PID: $!"
         echo "📋 Ver logs: tail -f nanobanana.log"
         echo "🌐 Acessar: http://localhost:$PORT"

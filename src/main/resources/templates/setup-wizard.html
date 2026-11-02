@@ -37,6 +37,8 @@
         .prod-card-setup .prod-name { font-weight: 600; font-size: 0.9rem; }
         .prod-card-setup .prod-info { color: #7f8c8d; font-size: 0.8rem; }
     </style>
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
 </head>
 <body style="background:#f5f7fa;">
     <div class="setup-container">
@@ -100,6 +102,7 @@
         <div class="setup-step">
             <h2><span class="step-num">2</span> Adicionar Produto Manualmente</h2>
             <form action="/setup/adicionar" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                 <div class="form-row">
                     <input type="text" name="nome" placeholder="Nome do produto" required>
                     <input type="number" name="preco" placeholder="Preço (MZN)" step="0.01" min="0" required>

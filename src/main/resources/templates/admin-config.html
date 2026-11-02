@@ -6,6 +6,8 @@
     <title>Configurações - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-admin">
@@ -22,6 +24,7 @@
                 <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
                 <li class="active"><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
                 <li><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+                <li><a href="/admin/logs"><i class="fas fa-clipboard-list"></i> Logs</a></li>
             </ul>
         </aside>
         <main class="content admin-content" style="width:100%;">
@@ -29,7 +32,7 @@
             <div class="assinatura-card">
                 <h2>💰 Preço da Assinatura Mensal</h2>
                 <p style="color:#7f8c8d;margin-bottom:16px;">Preço atual: <strong th:text="${precoAtual} + ' MZN'">350.0 MZN</strong></p>
-                <form action="/admin/config/preco" method="post" class="inline-form">
+                <form th:action="@{/admin/config/preco}" method="post" class="inline-form">
                     <input type="number" name="preco" placeholder="Novo preço" step="0.01" min="0" required>
                     <button type="submit" class="btn-success"><i class="fas fa-save"></i> Atualizar Preço</button>
                 </form>

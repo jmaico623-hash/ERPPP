@@ -141,6 +141,8 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
     </style>
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
 </head>
 <body>
     <div class="navbar">
@@ -168,6 +170,9 @@
             <div class="page-header">
                 <h1>📦 Gestão de Stock</h1>
                 <p>Apenas o DONO pode adicionar ou remover stock</p>
+                <a href="/export/stock.csv" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#27ae60;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;margin-top:8px;">
+                    <i class="fas fa-file-csv"></i> Exportar CSV
+                </a>
             </div>
 
             <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
@@ -216,7 +221,7 @@
                 <!-- Add Product Form -->
                 <div class="card">
                     <h3><i class="fas fa-plus"></i> Adicionar Novo Produto</h3>
-                    <form method="POST" action="/stock/produto/adicionar">
+                    <form method="POST" th:action="@{/stock/produto/adicionar}">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Nome do Produto</label>
@@ -257,7 +262,7 @@
                 <div class="card">
                     <h3><i class="fas fa-plus-circle" style="color: #4caf50;"></i> Registrar Entrada de Stock</h3>
                     <p style="color: #666; margin-bottom: 20px;">Esta ação aumenta o stock do produto. Apenas o DONO pode fazer isto.</p>
-                    <form method="POST" action="/stock/adicionar">
+                    <form method="POST" th:action="@{/stock/adicionar}">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Produto</label>
@@ -297,7 +302,7 @@
                 <div class="card">
                     <h3><i class="fas fa-minus-circle" style="color: #f44336;"></i> Registrar Baixa de Stock</h3>
                     <p style="color: #666; margin-bottom: 20px;">⚠️ Esta ação reduz o stock do produto. MOTIVO É OBRIGATÓRIO.</p>
-                    <form method="POST" action="/stock/baixar">
+                    <form method="POST" th:action="@{/stock/baixar}">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Produto</label>

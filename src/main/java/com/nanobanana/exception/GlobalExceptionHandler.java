@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -110,6 +111,19 @@ public class GlobalExceptionHandler {
         ModelAndView mav = new ModelAndView("error/403");
         mav.addObject("message", "Você não tem permissão para acessar esta página");
         mav.setStatus(HttpStatus.FORBIDDEN);
+        return mav;
+    }
+
+    /**
+     * Página não encontrada (404) — não deve redirecionar para o PDV
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ModelAndView handleNotFound(NoResourceFoundException ex, HttpServletRequest request) {
+        log.debug("Recurso não encontrado: {}", request.getRequestURI());
+        ModelAndView mav = new ModelAndView("error/404");
+        mav.addObject("path", request.getRequestURI());
+        mav.setStatus(HttpStatus.NOT_FOUND);
         return mav;
     }
 

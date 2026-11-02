@@ -36,6 +36,9 @@ RUN chown nano:nano app.jar
 
 USER nano
 
+# Perfil de produção por padrão
+ENV SPRING_PROFILES_ACTIVE=prod
+
 # Configurações JVM otimizadas para containers
 ENV JAVA_OPTS="-Xms512m -Xmx1024m \
     -XX:+UseG1GC \

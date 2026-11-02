@@ -1,6 +1,8 @@
 package com.nanobanana.repository;
 
 import com.nanobanana.model.Venda;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +14,10 @@ import java.util.UUID;
 public interface VendaRepository extends JpaRepository<Venda, UUID> {
     List<Venda> findByTenantId(UUID tenantId);
     List<Venda> findByTenantIdOrderByDataHoraDesc(UUID tenantId);
+
+    // Versões paginadas para listagens grandes
+    Page<Venda> findByTenantId(UUID tenantId, Pageable pageable);
+    Page<Venda> findByTenantIdAndVendedorId(UUID tenantId, UUID vendedorId, Pageable pageable);
     List<Venda> findByTenantIdAndVendedorId(UUID tenantId, UUID vendedorId);
     List<Venda> findByTenantIdAndStatus(UUID tenantId, Venda.Status status);
     List<Venda> findByTenantIdAndDataHoraBetween(UUID tenantId, LocalDateTime inicio, LocalDateTime fim);

@@ -6,6 +6,8 @@
     <title>Cupões - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-admin">
@@ -22,13 +24,14 @@
                 <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
                 <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
                 <li class="active"><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
+                <li><a href="/admin/logs"><i class="fas fa-clipboard-list"></i> Logs</a></li>
             </ul>
         </aside>
         <main class="content admin-content" style="width:100%;">
             <h1>🎁 Cupões de Desconto</h1>
             <div class="assinatura-card">
                 <h2>Criar Novo Cupão</h2>
-                <form action="/admin/cupao/criar" method="post" class="inline-form">
+                <form th:action="@{/admin/cupao/criar}" method="post" class="inline-form">
                     <input type="text" name="codigo" placeholder="Código (ex: PROMO10)" required>
                     <input type="number" name="descontoPercent" placeholder="% Desconto" min="1" max="100" required>
                     <select name="clienteId">

@@ -6,6 +6,8 @@
     <title>PDV - NanoBanana ERP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -131,6 +133,7 @@
                     </div>
 
                     <form id="formFinalizar" action="/vendas/finalizar" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                         <input type="hidden" name="itensJson" id="itensJson">
                         <input type="hidden" name="desconto" id="descontoFinal">
                         <input type="hidden" name="formaPagamento" id="formaPagamentoFinal">
@@ -154,6 +157,7 @@
             <details class="add-form" style="margin-top:30px;">
                 <summary><i class="fas fa-bolt"></i> Venda Rápida (1 produto)</summary>
                 <form action="/vendas/adicionar" method="post" class="inline-form">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                     <select name="produtoId" required>
                         <option value="">Selecione...</option>
                         <option th:each="p : ${produtos}" th:value="${p.id}" th:text="${p.nome}"></option>

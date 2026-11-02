@@ -1,0 +1,219 @@
+/* ============================================================
+   NanoBanana ERP - Tema global (claro/escuro) e ajustes de UI
+   Carregado depois dos estilos das páginas para poder sobrepor.
+   ============================================================ */
+
+:root {
+    --nb-bg: #f8fafc;
+    --nb-surface: #ffffff;
+    --nb-text: #0f172a;
+    --nb-muted: #64748b;
+    --nb-border: #e2e8f0;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --nb-bg: #0b1220;
+    --nb-surface: #151f33;
+    --nb-text: #e2e8f0;
+    --nb-muted: #94a3b8;
+    --nb-border: #2b3a55;
+}
+
+html[data-theme="dark"] body {
+    background: var(--nb-bg) !important;
+    color: var(--nb-text) !important;
+}
+
+html[data-theme="dark"] .navbar,
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .footer,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .container,
+html[data-theme="dark"] .content,
+html[data-theme="dark"] .main,
+html[data-theme="dark"] .main-content,
+html[data-theme="dark"] .page-content,
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .products-panel,
+html[data-theme="dark"] .cart-panel,
+html[data-theme="dark"] .product-card,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .login-card,
+html[data-theme="dark"] .auth-card,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .tab,
+html[data-theme="dark"] .stats-grid > div {
+    background: var(--nb-surface) !important;
+    color: var(--nb-text) !important;
+    border-color: var(--nb-border) !important;
+}
+
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] h5,
+html[data-theme="dark"] h6 {
+    color: var(--nb-text) !important;
+}
+
+html[data-theme="dark"] p,
+html[data-theme="dark"] label,
+html[data-theme="dark"] small,
+html[data-theme="dark"] .text-muted,
+html[data-theme="dark"] .subtitle {
+    color: var(--nb-muted) !important;
+}
+
+html[data-theme="dark"] table {
+    color: var(--nb-text) !important;
+}
+
+html[data-theme="dark"] th {
+    background: #1b2942 !important;
+    color: var(--nb-text) !important;
+    border-color: var(--nb-border) !important;
+}
+
+html[data-theme="dark"] td {
+    color: var(--nb-text) !important;
+    border-color: var(--nb-border) !important;
+}
+
+html[data-theme="dark"] tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .form-control {
+    background: #0f1a2e !important;
+    color: var(--nb-text) !important;
+    border-color: var(--nb-border) !important;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+    color: #64748b !important;
+}
+
+html[data-theme="dark"] a:not([class*="btn"]):not(.button):not(.navbar a) {
+    color: #6ee7a8;
+}
+
+html[data-theme="dark"] hr {
+    border-color: var(--nb-border) !important;
+}
+
+html[data-theme="dark"] .alert {
+    filter: brightness(0.92);
+}
+
+/* Botão flutuante de tema */
+.nb-theme-toggle {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 9999;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nb-theme-toggle:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.nb-theme-toggle:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px;
+}
+
+/* Paginação reutilizável */
+.nb-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 18px 8px 6px;
+}
+
+.nb-pagination a,
+.nb-pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--nb-border);
+    border-radius: 8px;
+    background: var(--nb-surface);
+    color: var(--nb-text);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.nb-pagination a:hover {
+    background: #e8f8f0;
+    transform: translateY(-1px);
+}
+
+.nb-pagination .current {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-color: transparent;
+    color: #fff;
+}
+
+.nb-pagination .disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+html[data-theme="dark"] .nb-pagination a:hover {
+    background: #1b2942;
+}
+
+/* Acessibilidade */
+:focus-visible {
+    outline: 2px solid #27ae60;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Tabelas largas em telas pequenas */
+@media (max-width: 768px) {
+    .table-responsive,
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Impressão */
+@media print {
+    .nb-theme-toggle { display: none !important; }
+    body { background: #fff !important; color: #000 !important; }
+}

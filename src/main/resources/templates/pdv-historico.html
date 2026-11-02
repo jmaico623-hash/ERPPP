@@ -26,6 +26,8 @@
         .badge-info { background: #e3f2fd; color: #2196f3; }
         .badge-warning { background: #fff3e0; color: #ff9800; }
     </style>
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
 </head>
 <body>
     <div class="navbar">
@@ -43,6 +45,9 @@
             <h1>📋 Histórico de Vendas</h1>
             <p th:if="${isVendedor}">Apenas suas vendas</p>
             <p th:if="${!isVendedor}">Todas as vendas da loja</p>
+            <a href="/export/vendas.csv" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#27ae60;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;margin-top:8px;">
+                <i class="fas fa-file-csv"></i> Exportar CSV
+            </a>
         </div>
 
         <div class="card">
@@ -74,6 +79,14 @@
                     </tr>
                 </tbody>
             </table>
+
+            <div class="nb-pagination" th:if="${pagina != null and pagina.totalPages > 1}">
+                <a th:if="${pagina.hasPrevious()}" th:href="@{/pdv/historico(page=${pagina.number - 1})}">‹ Anterior</a>
+                <span th:unless="${pagina.hasPrevious()}" class="disabled">‹ Anterior</span>
+                <span class="current" th:text="${pagina.number + 1} + ' / ' + ${pagina.totalPages}">1 / 1</span>
+                <a th:if="${pagina.hasNext()}" th:href="@{/pdv/historico(page=${pagina.number + 1})}">Próxima ›</a>
+                <span th:unless="${pagina.hasNext()}" class="disabled">Próxima ›</span>
+            </div>
         </div>
     </div>
 </body>

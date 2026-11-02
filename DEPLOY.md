@@ -1,70 +1,124 @@
 # 🚀 Guia de Deploy - NanoBanana ERP
 
-## Deploy em 3 Passos
+Deploy em produção usando **Render.com** (recomendado) ou **Docker**.
 
-### 1️⃣ Push para GitHub
+## ✅ Pré-requisitos
+
+- Repositório no GitHub
+- Conta gratuita em [render.com](https://render.com)
+- JDK 21 apenas para rodar localmente (o Render compila com o `mvnw` do projeto)
+
+## 1️⃣ Enviar o código para o GitHub
 
 ```bash
-cd /home/tiih/nanobanana-web
-
-# Crie o repo em github.com/new com nome: nanobanana-erp
-
+git init
+git add .
+git commit -m "NanoBanana ERP"
+git branch -M main
 git remote add origin https://github.com/SEU_USER/nanobanana-erp.git
 git push -u origin main
 ```
 
-### 2️⃣ Deploy no Render.com
+## 2️⃣ Deploy no Render (Blueprint)
 
-**Método BluePrint (automático):**
-1. Acesse **render.com** → conta grátis
-2. **New+** → **Blueprint**
-3. Selecione o repo `nanobanana-erp`
-4. Clique **Apply** → Pronto!
+1. Acesse **render.com** → **New +** → **Blueprint**.
+2. Selecione o repositório `nanobanana-erp`.
+3. O Render lê o `render.yaml` e cria:
+   - **Web Service** Java (build `./mvnw clean package -DskipTests`)
+   - **PostgreSQL** gratuito (`nanobanana-db`)
+   - Variáveis de conexão (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`)
+   - `ADMIN_PASSWORD` gerada automaticamente
+4. Clique em **Apply** e aguarde o build (~3–5 min).
 
-**Método Manual:**
-1. **New+** → **Web Service**
-2. Conecte o repo `nanobanana-erp`
-3. Configurações:
-   - **Build**: `mvn clean package -DskipTests`
-   - **Start**: `java -jar target/erp-1.0.0.jar`
-   - **Environment**: `SPRING_PROFILES_ACTIVE=prod`
-4. Adicione PostgreSQL: **New+** → **PostgreSQL** → Plano Free
-5. Copie a connection string para a variável `DATABASE_URL`
-6. Deploy!
+### Variáveis de ambiente
 
-### 3️⃣ Push-to-Deploy
+| Variável | Descrição |
+|---|---|
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+| `DB_HOST`, `DB_PORT`, `DB_NAME` | Conexão PostgreSQL |
+| `DB_USER`, `DB_PASS` | Credenciais do banco |
+| `ADMIN_EMAIL` | Email do super admin |
+| `ADMIN_PASSWORD` | Senha do super admin (**obrigatória em produção**) |
+| `SESSION_COOKIE_SECURE` | `true` atrás de HTTPS |
+| `PORT` | Porta HTTP (o Render injeta automaticamente) |
 
-Daqui em diante, cada push atualiza o site:
+> A senha do super admin aparece em **Environment** no painel do Render.
+> Guarde-a: ela não é exibida novamente.
+
+### Deploy manual (sem Blueprint)
+
+- **Build**: `./mvnw clean package -DskipTests`
+- **Start**: `java -jar target/erp-1.0.0.jar`
+- **Health check**: `/actuator/health`
+- Crie um **PostgreSQL** e preencha as variáveis `DB_*` acima.
+
+## 3️⃣ Push-to-Deploy
 
 ```bash
 git add .
 git commit -m "minha alteracao"
 git push
-# Render atualiza automaticamente em ~2 min 🚀
 ```
 
-## URLs Após Deploy
+O Render recompila e reinicia automaticamente.
+
+## 🐳 Deploy com Docker
+
+```bash
+cp .env.example .env
+# edite DB_PASS, ADMIN_PASSWORD e (opcional) SESSION_COOKIE_SECURE
+docker compose up -d --build
+```
+
+- ERP: <http://localhost:8080>
+- pgAdmin (opcional): `docker compose --profile tools up -d` → <http://localhost:5050>
+
+O container usa o perfil `prod`, PostgreSQL e Flyway (schema aplicado no start).
+
+## 🔗 URLs após o deploy
 
 | Recurso | URL |
 |---|---|
-| **ERP** | `https://nanobanana-erp.onrender.com` |
-| **Login** | `https://nanobanana-erp.onrender.com/login` |
-| **Admin** | `https://nanobanana-erp.onrender.com/admin` |
-| **H2 (dev)** | `http://localhost:8080/h2-console` |
+| ERP | `https://SEU-SERVICO.onrender.com` |
+| Login | `/login` |
+| Painel super admin | `/admin/login` |
+| Health check | `/actuator/health` |
+| API JSON | `/api/produtos`, `/api/vendas`, `/api/resumo` |
+| Exportações | `/export/vendas.csv`, `/export/stock.csv`, `/export/fiados.csv` |
 
-## Credenciais
+## 🔑 Credenciais
 
-| Perfil | Email | Senha |
-|---|---|---|
-| Super Admin | admin@nanobanana.co.mz | nano2026 |
-| Demo Pago | junior@email.com | 1234 |
-| Teste Expirado | maria@email.com | 1234 |
+- **Super admin**: `ADMIN_EMAIL` / `ADMIN_PASSWORD` definidos no ambiente.
+- **Dados demo**: existem apenas no perfil `dev` (`app.seed.enabled=true`).
+- Em produção **não há senhas padrão**.
 
-## Troubleshooting
+## 🧪 Verificação pós-deploy
+
+```bash
+curl -s https://SEU-SERVICO.onrender.com/actuator/health
+# {"status":"UP"}
+```
+
+Depois acesse `/admin/login` com as credenciais de super admin e confirme que o
+painel abre. Se o login falhar, revise `ADMIN_EMAIL`/`ADMIN_PASSWORD` e os logs
+do serviço.
+
+## 🛠️ Troubleshooting
 
 | Problema | Solução |
 |---|---|
-| Build falha no Render | Verifique logs em "Events" no dashboard |
-| 502 Bad Gateway | Aguarde 1-2 min para o servidor iniciar |
-| Erro de banco | Verifique `DATABASE_URL` nas env vars |
+| Build falha | Veja os logs em **Events / Logs** no Render |
+| 502 Bad Gateway | Aguarde 1–2 min (primeiro start é mais lento) |
+| Erro de banco | Confira `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` |
+| Login admin falha | Confirme `ADMIN_PASSWORD`; o admin só é criado se ela existir |
+| Sessão cai após login | Em HTTPS, use `SESSION_COOKIE_SECURE=true` |
+| Dados somem | Em produção use PostgreSQL (`prod`), nunca H2 |
 | Push rejeitado | `git config --global credential.helper store` |
+
+## 📌 Observações
+
+- O schema é versionado por **Flyway** (`src/main/resources/db/migration`).
+  Nunca use `ddl-auto=update` em produção.
+- O PostgreSQL gratuito do Render expira após 90 dias; faça backup/upgrade antes.
+- Faça backup do banco antes de atualizações grandes:
+  `pg_dump -h HOST -U USER -d nanobanana > backup.sql`

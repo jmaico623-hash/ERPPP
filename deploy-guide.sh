@@ -36,7 +36,7 @@ echo ""
 echo "📌 PASSO 2: Push do código para o GitHub"
 echo ""
 
-cd /home/tiih/nanobanana-web
+cd "$(dirname "$0")"
 
 git remote remove origin 2>/dev/null
 git remote add origin "$REPO_URL"
@@ -86,7 +86,7 @@ echo "🔄 FUTURE UPDATES (Push-to-Deploy):"
 echo ""
 echo "  Sempre que fizer alteracoes no codigo:"
 echo ""
-echo "    cd /home/tiih/nanobanana-web"
+echo "    cd "$(dirname "$0")""
 echo "    git add ."
 echo "    git commit -m 'descricao'"
 echo "    git push"

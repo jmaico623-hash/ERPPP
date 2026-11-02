@@ -29,6 +29,9 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @org.springframework.beans.factory.annotation.Value("${app.security.max-login-attempts:5}")
+    private int maxLoginAttempts = 5;
+
     /**
      * Faz login de um usuário
      * Transacional com lock pessimista para evitar race condition nas tentativas de login
@@ -59,8 +62,8 @@ public class AuthService {
             // Incrementa tentativas falhas (atomic com lock)
             usuario.setTentativasFalhas(usuario.getTentativasFalhas() + 1);
             
-            // Bloqueia após 5 tentativas
-            if (usuario.getTentativasFalhas() >= 5) {
+            // Bloqueia após o limite configurado (default: 5)
+            if (usuario.getTentativasFalhas() >= maxLoginAttempts) {
                 usuario.setBloqueado(true);
             }
             usuarioRepository.save(usuario);

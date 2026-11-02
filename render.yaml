@@ -5,15 +5,25 @@ services:
     region: frankfurt
     plan: free
     branch: main
-    buildCommand: mvn clean package -DskipTests
+    buildCommand: ./mvnw clean package -DskipTests
     startCommand: java -jar target/erp-1.0.0.jar
+    healthCheckPath: /actuator/health
+    autoDeploy: true
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: DATABASE_URL
+      - key: DB_HOST
         fromDatabase:
           name: nanobanana-db
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: nanobanana-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: nanobanana-db
+          property: database
       - key: DB_USER
         fromDatabase:
           name: nanobanana-db
@@ -22,8 +32,12 @@ services:
         fromDatabase:
           name: nanobanana-db
           property: password
-    healthCheckPath: /login
-    autoDeploy: true
+      - key: ADMIN_EMAIL
+        value: admin@nanobanana.co.mz
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
 
   - type: pserv
     name: nanobanana-db

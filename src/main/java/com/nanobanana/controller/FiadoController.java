@@ -4,6 +4,9 @@ import com.nanobanana.model.*;
 import com.nanobanana.repository.*;
 import com.nanobanana.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -32,22 +35,24 @@ public class FiadoController {
     private VendaRepository vendaRepository;
 
     /**
-     * Lista todos os fiados
+     * Lista todos os fiados (paginado, 25 por página).
      */
     @GetMapping
-    public String listarFiados(Model model) {
+    public String listarFiados(@RequestParam(defaultValue = "0") int page, Model model) {
         var usuarioOpt = authService.getUsuarioLogado();
         if (usuarioOpt.isEmpty()) return "redirect:/login";
 
         Usuario usuario = usuarioOpt.get();
         UUID tenantId = authService.getTenantIdLogado();
 
-        List<Fiado> fiados = fiadoRepository.findByTenantIdOrderByDataCriacaoDesc(tenantId);
+        Page<Fiado> fiados = fiadoRepository.findByTenantId(tenantId,
+                PageRequest.of(Math.max(page, 0), 25, Sort.by(Sort.Direction.DESC, "dataCriacao")));
         BigDecimal totalFiado = fiadoRepository.totalFiadoNaoPago(tenantId);
         long fiadosNaoPagos = fiadoRepository.countByTenantIdAndPago(tenantId, false);
 
         model.addAttribute("usuario", usuario);
-        model.addAttribute("fiados", fiados);
+        model.addAttribute("fiados", fiados.getContent());
+        model.addAttribute("pagina", fiados);
         model.addAttribute("totalFiado", totalFiado != null ? totalFiado : BigDecimal.ZERO);
         model.addAttribute("fiadosNaoPagos", fiadosNaoPagos);
 

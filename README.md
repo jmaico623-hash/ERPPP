@@ -1,109 +1,136 @@
 # 🍌 NanoBanana ERP SaaS
 
-> **ERP Revolucionário por Assinatura** — 350 MZN/mês com 15 dias de teste grátis
+> **ERP por assinatura** — 350 MZN/mês com 15 dias de teste grátis.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-## 🚀 Deploy em 2 Minutos (Grátis)
+## 🚀 Stack
 
-### Passo 1: Push para o GitHub
+- **Spring Boot 3.5.16** + **Java 21**
+- **PostgreSQL** (produção) / **H2 persistente** (desenvolvimento)
+- **Flyway** para versionamento do schema
+- **Thymeleaf** + CSS responsivo (tema claro/escuro)
+- **Spring Security** (BCrypt, CSRF, sessões, bloqueio por tentativas)
+- **Maven Wrapper** (`./mvnw`) — não precisa instalar Maven
+
+## 🏃 Rodar localmente
+
+Pré-requisitos: **JDK 21**.
 
 ```bash
-cd /home/tiih/nanobanana-web
-git init
-git add .
-git commit -m "🍌 NanoBanana ERP SaaS - Initial commit"
-git branch -M main
-git remote add origin https://github.com/SEU_USER/nanobanana-erp.git
-git push -u origin main
+./mvnw spring-boot:run           # perfil dev (H2 em ./data, dados demo)
+# ou
+./mvnw clean package -DskipTests
+java -jar target/erp-1.0.0.jar    # perfil dev por padrão
 ```
 
-### Passo 2: Deploy no Render.com
+Acesse: <http://localhost:8080>
 
-1. Acesse **[render.com](https://render.com)** e crie conta grátis
-2. Clique em **"New +" → "Blueprint"**
-3. Conecte seu repositório GitHub `nanobanana-erp`
-4. Render detecta o `render.yaml` automaticamente
-5. Clique em **"Apply"**
-6. Pronto! Seu ERP estará em: `https://nanobanana-erp.onrender.com`
+| Recurso | URL |
+|---|---|
+| Login | `/login` |
+| PDV | `/pdv` |
+| Dashboard | `/dashboard` |
+| Painel super admin | `/admin/login` |
+| Health check | `/actuator/health` |
+| API JSON | `/api/produtos`, `/api/vendas`, `/api/resumo` |
+| Exportações CSV | `/export/vendas.csv`, `/export/stock.csv`, `/export/fiados.csv` |
 
-**Alternativa manual:** New+ → Web Service → Conecte o repo → Build: `mvn clean package -DskipTests` → Start: `java -jar target/erp-1.0.0.jar`
+As listagens de vendas e fiados são paginadas (25 registos por página).
 
----
+### Credenciais de desenvolvimento
 
-## 🔑 Credenciais
+Criadas apenas com `app.seed.enabled=true` (perfil **dev**):
 
 | Perfil | Email | Senha |
 |---|---|---|
-| **Cliente Demo (Pago)** | junior@email.com | 1234 |
-| **Teste Expirado** | maria@email.com | 1234 |
-| **Super Admin** | admin@nanobanana.co.mz | nano2026 |
+| Dono (Mercearia) | `joao@email.com` | `1234` |
+| Gerente | `ana@email.com` | `1234` |
+| Vendedor | `carlos@email.com` | `1234` |
+| Dono (Farmácia) | `maria.farma@email.com` | `1234` |
+| Super admin | `admin@nanobanana.co.mz` | `admin123` (ou `ADMIN_PASSWORD`) |
 
-## 💰 Modelo de Negócio
+> ⚠️ Em produção `app.seed.enabled=false`: nenhum dado demo é criado.
+> O super admin só existe se `ADMIN_PASSWORD` estiver definida.
 
-- **15 dias grátis** — registo sem cartão
-- **350,00 MZN/mês** — após período de teste
-- **Pagamento**: M-Pesa, e-Mola, Cash
-- **Bloqueio automático** após expiração
+## ⚙️ Perfis e configuração
 
-## 📋 Funcionalidades
+| Perfil | Banco | Seed | H2 Console |
+|---|---|---|---|
+| `dev` (padrão) | H2 em arquivo (`./data`) | ✅ | ✅ `/h2-console` |
+| `prod` | PostgreSQL via env vars | ❌ | ❌ |
+| `test` | H2 em memória | ❌ | ❌ |
 
-| Módulo | Descrição |
+### Variáveis de ambiente (produção)
+
+| Variável | Descrição |
 |---|---|
-| 📊 Dashboard | Vendas do dia, fiados, valor stock |
-| 🛒 PDV | Ponto de venda com busca de produtos |
-| 📖 Fiado | Caderno de fiado com cobrança |
-| 📦 Inventário | CRUD produtos, reabastecimento |
-| ⏳ Estagnados | Produtos sem venda há +30 dias |
-| 💰 Assinatura | Gestão de assinatura do cliente |
-| 🛡️ Admin Panel | Painel super-admin completo |
+| `SPRING_PROFILES_ACTIVE=prod` | Ativa o perfil de produção |
+| `DB_HOST`, `DB_PORT`, `DB_NAME` | Conexão PostgreSQL |
+| `DB_USER`, `DB_PASS` | Credenciais do banco |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Super administrador (obrigatório) |
+| `SESSION_COOKIE_SECURE` | `true` atrás de HTTPS (padrão em prod) |
+| `PORT` | Porta HTTP (padrão 8080) |
 
-## 🏗️ Stack
+Copie `.env.example` para `.env` ao usar Docker Compose.
 
-- **Spring Boot 3.2.4** + **Java 21**
-- **PostgreSQL** (produção) / **H2** (dev)
-- **Thymeleaf** + **CSS responsivo**
-- **Maven** para build
+## 🐳 Docker
+
+```bash
+cp .env.example .env
+# edite DB_PASS e ADMIN_PASSWORD
+docker compose up -d --build
+docker compose --profile tools up -d   # inclui pgAdmin em :5050
+```
+
+## ☁️ Deploy no Render
+
+1. Faça push do projeto para o GitHub.
+2. Em **render.com** → **New +** → **Blueprint** → selecione o repositório.
+3. O `render.yaml` cria o Web Service + PostgreSQL e gera `ADMIN_PASSWORD`.
+4. Após o deploy, veja a senha gerada em **Environment** no painel do Render.
+
+## 🧪 Testes
+
+```bash
+./mvnw test
+```
+
+Cobertura inclui autenticação/bloqueio de login, PDV (venda/cancelamento),
+stock (entrada/baixa), administração de assinaturas e controllers.
 
 ## 📁 Estrutura
 
 ```
-nanobanana-web/
-├── pom.xml                          ← Maven config
-├── render.yaml                      ← Deploy automático
-├── schema.sql                       ← DB schema
-├── deploy.sh                        ← Script local
-├── src/
-│   ├── java/com/nanobanana/
-│   │   ├── NanoBananaApplication.java
-│   │   ├── model/          ← 6 entidades JPA
-│   │   ├── repository/     ← 6 repositories
-│   │   ├── controller/     ← Auth, ERP, Admin
-│   │   └── config/         ← DataInitializer
-│   └── resources/
-│       ├── application.properties   ← Multi-perfil (dev/prod)
-│       ├── templates/      ← 9 páginas HTML
-│       └── static/css/     ← Style responsivo
-└── .gitignore
+src/main/java/com/nanobanana/
+├── config/       SecurityConfig, AdminAuthInterceptor, WebConfig, initializers
+├── controller/   Auth, PDV, Stock, Fiado, Dashboard, Funcionario, Admin,
+│                 Export (CSV) e Api (JSON)
+├── service/      AuthService, StockService, VendaService, AdminService
+├── model/        Entidades JPA
+├── repository/   Spring Data JPA
+└── dto/          Requests validados
+
+src/main/resources/
+├── application.properties         ← base
+├── application-dev.properties     ← H2 + seed
+├── application-prod.properties    ← PostgreSQL
+├── db/migration/                  ← Flyway (V1, V2)
+├── templates/                     ← páginas Thymeleaf
+└── static/css|js/                 ← tema global (theme.css/theme.js)
 ```
 
-## 🔧 Dev Local
+## 🔐 Segurança
 
-```bash
-./deploy.sh build   # Compila
-./deploy.sh start   # Inicia http://localhost:8080
-./deploy.sh status  # Verifica estado
-./deploy.sh stop    # Para servidor
-```
+- Senhas com **BCrypt**; bloqueio após 5 tentativas (configurável).
+- **CSRF** ativo em todos os formulários (Thymeleaf injeta o token).
+- Painel `/admin/**` isolado por sessão própria (`AdminAuthInterceptor`).
+- Credenciais e segredos vêm do ambiente — nada hardcoded em produção.
+- Cookies `HttpOnly` + `SameSite=Lax` (e `Secure` em produção).
 
-## 🔄 Push-to-Deploy Workflow
+## 💰 Modelo de negócio
 
-```bash
-# Após fazer alterações no código:
-git add .
-git commit -m "descrição da mudança"
-git push
-
-# Render detecta o push e faz deploy automático!
-# Seu site atualiza em ~2 minutos 🚀
-```
+- **15 dias grátis** — registo sem cartão
+- **350,00 MZN/mês** após o teste
+- Pagamento: M-Pesa, e-Mola, Cash
+- Bloqueio automático após expiração

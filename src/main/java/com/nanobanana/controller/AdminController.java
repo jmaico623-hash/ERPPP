@@ -3,7 +3,10 @@ package com.nanobanana.controller;
 import com.nanobanana.model.*;
 import com.nanobanana.repository.*;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +25,8 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
     private AdminRepository adminRepo;
@@ -46,6 +51,12 @@ public class AdminController {
 
     @Autowired
     private FiadoRepository fiadoRepo;
+
+    @Autowired
+    private AuditoriaLogRepository auditoriaLogRepo;
+
+    @Autowired
+    private com.nanobanana.service.AdminService adminService;
 
     // --- Login Admin ---
 
@@ -109,7 +120,7 @@ public class AdminController {
 
         double receitaTotal = todosPagamentos.stream()
                 .filter(Pagamento::isConfirmado)
-                .mapToDouble(Pagamento::getValor)
+                .mapToDouble(p -> p.getValor().doubleValue())
                 .sum();
 
         // Receita por período
@@ -119,12 +130,12 @@ public class AdminController {
 
         double receitaSemana = todosPagamentos.stream()
                 .filter(p -> p.isConfirmado() && !p.getData().isBefore(inicioSemana))
-                .mapToDouble(Pagamento::getValor)
+                .mapToDouble(p -> p.getValor().doubleValue())
                 .sum();
 
         double receitaMes = todosPagamentos.stream()
                 .filter(p -> p.isConfirmado() && !p.getData().isBefore(inicioMes))
-                .mapToDouble(Pagamento::getValor)
+                .mapToDouble(p -> p.getValor().doubleValue())
                 .sum();
 
         // Vendas globais hoje
@@ -168,18 +179,10 @@ public class AdminController {
 
     @PostMapping("/confirmar-pagamento/{id}")
     public String confirmarPagamento(@PathVariable Long id) {
-        Pagamento pagamento = pagamentoRepo.findById(id).orElse(null);
-        if (pagamento != null) {
-            pagamento.confirmar();
-            pagamentoRepo.save(pagamento);
-
-            Tenant tenant = tenantRepo.findById(pagamento.getClienteId()).orElse(null);
-            if (tenant != null) {
-                tenant.setPlano("pago");
-                tenant.setAtivo(true);
-                tenant.setDataExpiracao(LocalDate.now().plusMonths(1));
-                tenantRepo.save(tenant);
-            }
+        try {
+            adminService.confirmarPagamento(id);
+        } catch (IllegalArgumentException ignored) {
+            // cliente/pagamento removido entre a listagem e a ação
         }
         return "redirect:/admin";
     }
@@ -188,23 +191,18 @@ public class AdminController {
 
     @PostMapping("/cliente/{id}/ativar")
     public String ativarCliente(@PathVariable UUID id) {
-        Tenant tenant = tenantRepo.findById(id).orElse(null);
-        if (tenant != null) {
-            tenant.setPlano("pago");
-            tenant.setAtivo(true);
-            tenant.setDataExpiracao(LocalDate.now().plusMonths(1));
-            tenantRepo.save(tenant);
+        try {
+            adminService.ativarCliente(id);
+        } catch (IllegalArgumentException ignored) {
         }
         return "redirect:/admin";
     }
 
     @PostMapping("/cliente/{id}/desativar")
     public String desativarCliente(@PathVariable UUID id) {
-        Tenant tenant = tenantRepo.findById(id).orElse(null);
-        if (tenant != null) {
-            tenant.setPlano("expirado");
-            tenant.setDataExpiracao(LocalDate.now().minusDays(1)); // set expired
-            tenantRepo.save(tenant);
+        try {
+            adminService.desativarCliente(id);
+        } catch (IllegalArgumentException ignored) {
         }
         return "redirect:/admin";
     }
@@ -213,12 +211,9 @@ public class AdminController {
 
     @PostMapping("/cliente/{id}/estender-teste")
     public String estenderTeste(@PathVariable UUID id) {
-        Tenant tenant = tenantRepo.findById(id).orElse(null);
-        if (tenant != null) {
-            tenant.setPlano("teste");
-            tenant.setAtivo(true);
-            tenant.setDataExpiracao(LocalDate.now().plusDays(15));
-            tenantRepo.save(tenant);
+        try {
+            adminService.estenderTeste(id, 15);
+        } catch (IllegalArgumentException ignored) {
         }
         return "redirect:/admin";
     }
@@ -370,28 +365,10 @@ public class AdminController {
 
     @PostMapping("/cliente/{id}/apagar")
     public String apagarCliente(@PathVariable UUID id) {
-        Tenant tenant = tenantRepo.findById(id).orElse(null);
-        if (tenant != null) {
-            // Apagar dados relacionados
-            List<Venda> vendas = vendaRepo.findByTenantId(id);
-            vendaRepo.deleteAll(vendas);
-
-            List<Fiado> fiados = fiadoRepo.findByTenantId(id);
-            fiadoRepo.deleteAll(fiados);
-
-            List<Produto> produtos = produtoRepo.findByTenantId(id);
-            produtoRepo.deleteAll(produtos);
-
-            List<Usuario> usuarios = usuarioRepo.findAll().stream()
-                    .filter(u -> u.getTenantId().equals(id))
-                    .collect(Collectors.toList());
-            usuarioRepo.deleteAll(usuarios);
-
-            List<Pagamento> pagamentos = pagamentoRepo.findAll().stream()
-                    .filter(p -> p.getClienteId().equals(id)).collect(Collectors.toList());
-            pagamentoRepo.deleteAll(pagamentos);
-
-            tenantRepo.delete(tenant);
+        try {
+            adminService.apagarCliente(id);
+        } catch (IllegalArgumentException ignored) {
+            // cliente removido entre a listagem e a ação
         }
         return "redirect:/admin?apagado";
     }
@@ -402,14 +379,10 @@ public class AdminController {
 
     @PostMapping("/cliente/{id}/reset-senha")
     public String resetSenha(@PathVariable UUID id, @RequestParam String novaSenha) {
-        // Encontrar dono do tenant e alterar senha (com hash BCrypt)
-        Optional<Usuario> donoOpt = usuarioRepo.findAll().stream()
-                .filter(u -> u.getTenantId().equals(id) && u.getRole() == Usuario.Role.DONO)
-                .findFirst();
-        if (donoOpt.isPresent()) {
-            Usuario dono = donoOpt.get();
-            dono.setSenha(passwordEncoder.encode(novaSenha));
-            usuarioRepo.save(dono);
+        try {
+            adminService.resetSenhaDono(id, novaSenha);
+        } catch (IllegalArgumentException ignored) {
+            // tenant/dono inexistente
         }
         return "redirect:/admin?senhaReset";
     }
@@ -427,8 +400,7 @@ public class AdminController {
 
     @PostMapping("/config/preco")
     public String atualizarPreco(@RequestParam Double preco) {
-        // Log/configure price - can be saved in config properties if desired
-        System.out.println("[CONFIG] Preço atualizado para: " + preco);
+        log.info("Preço da assinatura atualizado para {}", preco);
         return "redirect:/admin/config?precoAtualizado";
     }
 
@@ -453,7 +425,7 @@ public class AdminController {
             String chave = ym.format(fmt);
             double total = pagamentos.stream()
                     .filter(p -> YearMonth.from(p.getData()).equals(ym))
-                    .mapToDouble(Pagamento::getValor).sum();
+                    .mapToDouble(p -> p.getValor().doubleValue()).sum();
             receitaMensal.put(chave, total);
         }
 
@@ -500,7 +472,7 @@ public class AdminController {
 
         if (!isAdmin(session)) return "redirect:/admin/login";
 
-        System.out.println("[MSG GLOBAL] " + titulo + ": " + mensagem);
+        log.info("Mensagem global enviada: {} - {}", titulo, mensagem);
         return "redirect:/admin?msgEnviada";
     }
 
@@ -511,7 +483,20 @@ public class AdminController {
     @GetMapping("/logs")
     public String logsAdmin(HttpSession session, Model model) {
         if (!isAdmin(session)) return "redirect:/admin/login";
-        model.addAttribute("info", "Sistema em execução desde " + LocalDate.now());
+
+        List<AuditoriaLog> logs = auditoriaLogRepo
+                .findAll(Sort.by(Sort.Direction.DESC, "dataHora"))
+                .stream()
+                .limit(200)
+                .toList();
+
+        Map<UUID, String> clienteNomeMap = new HashMap<>();
+        for (Tenant t : tenantRepo.findAll()) {
+            clienteNomeMap.put(t.getId(), t.getNome());
+        }
+
+        model.addAttribute("logs", logs);
+        model.addAttribute("clienteNomeMap", clienteNomeMap);
         return "admin-logs";
     }
 
@@ -531,7 +516,7 @@ public class AdminController {
             @RequestParam String codigo,
             @RequestParam Double descontoPercent,
             @RequestParam(required = false) UUID clienteId) {
-        System.out.println("[CUPÃO] " + codigo + ": " + descontoPercent + "% para cliente " + clienteId);
+        log.info("Cupão criado: {} ({}%) para cliente {}", codigo, descontoPercent, clienteId);
         return "redirect:/admin/cupoes?cupaoCriado";
     }
 }

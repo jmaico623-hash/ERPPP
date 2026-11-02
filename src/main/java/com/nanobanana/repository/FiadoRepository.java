@@ -1,6 +1,8 @@
 package com.nanobanana.repository;
 
 import com.nanobanana.model.Fiado;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +12,7 @@ import java.util.UUID;
 
 public interface FiadoRepository extends JpaRepository<Fiado, UUID> {
     List<Fiado> findByTenantId(UUID tenantId);
+    Page<Fiado> findByTenantId(UUID tenantId, Pageable pageable);
     List<Fiado> findByTenantIdAndPago(UUID tenantId, boolean pago);
     long countByTenantId(UUID tenantId);
     long countByTenantIdAndPago(UUID tenantId, boolean pago);

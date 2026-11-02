@@ -1,6 +1,7 @@
 package com.nanobanana.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -15,8 +16,8 @@ public class Pagamento {
     @Column(name = "cliente_id", nullable = false)
     private UUID clienteId;
 
-    @Column(nullable = false)
-    private Double valor;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal valor;
 
     @Column(nullable = false)
     private LocalDate data;
@@ -34,7 +35,7 @@ public class Pagamento {
         this.confirmado = false;
     }
 
-    public Pagamento(UUID clienteId, Double valor, String metodo, String referencia) {
+    public Pagamento(UUID clienteId, BigDecimal valor, String metodo, String referencia) {
         this.clienteId = clienteId;
         this.valor = valor;
         this.metodo = metodo;
@@ -63,11 +64,11 @@ public class Pagamento {
         this.clienteId = clienteId;
     }
 
-    public Double getValor() {
+    public BigDecimal getValor() {
         return valor;
     }
 
-    public void setValor(Double valor) {
+    public void setValor(BigDecimal valor) {
         this.valor = valor;
     }
 

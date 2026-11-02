@@ -42,6 +42,8 @@
         .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; }
         .alert-success { background: #efe; color: #090; border: 1px solid #cfc; }
     </style>
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
 </head>
 <body>
     <div class="navbar">
@@ -68,6 +70,9 @@
             <div class="page-header">
                 <h1>📒 Caderno de Fiado</h1>
                 <p>Gestão de vendas fiadas e cobranças</p>
+                <a href="/export/fiados.csv" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#27ae60;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;margin-top:8px;">
+                    <i class="fas fa-file-csv"></i> Exportar CSV
+                </a>
             </div>
 
             <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
@@ -127,6 +132,14 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <div class="nb-pagination" th:if="${pagina != null and pagina.totalPages > 1}">
+                    <a th:if="${pagina.hasPrevious()}" th:href="@{/fiados(page=${pagina.number - 1})}">‹ Anterior</a>
+                    <span th:unless="${pagina.hasPrevious()}" class="disabled">‹ Anterior</span>
+                    <span class="current" th:text="${pagina.number + 1} + ' / ' + ${pagina.totalPages}">1 / 1</span>
+                    <a th:if="${pagina.hasNext()}" th:href="@{/fiados(page=${pagina.number + 1})}">Próxima ›</a>
+                    <span th:unless="${pagina.hasNext()}" class="disabled">Próxima ›</span>
+                </div>
             </div>
         </div>
     </div>
