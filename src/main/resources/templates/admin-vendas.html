@@ -31,6 +31,8 @@
             </ul>
         </aside>
         <main class="content admin-content" style="width:100%;">
+            <div th:replace="~{admin-flash :: flash}"></div>
+
             <h1>📊 Vendas Globais</h1>
             <div class="periodo-filtro">
                 <a th:href="@{/admin/vendas(periodo='hoje')}" th:class="${periodo == 'hoje' or periodo == null ? 'btn-periodo active' : 'btn-periodo'}">Hoje</a>

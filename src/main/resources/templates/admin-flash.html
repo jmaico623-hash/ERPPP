@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="flash">
+    <div th:if="${erro}" class="alert alert-error" role="alert">
+        <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+        <span th:text="${erro}">Erro</span>
+    </div>
+    <div th:if="${sucesso}" class="alert alert-success" role="status">
+        <i class="fas fa-circle-check" aria-hidden="true"></i>
+        <span th:text="${sucesso}">Sucesso</span>
+    </div>
+</div>
+</body>
+</html>

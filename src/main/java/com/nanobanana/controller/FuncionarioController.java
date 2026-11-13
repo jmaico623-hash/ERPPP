@@ -89,9 +89,20 @@ public class FuncionarioController {
             return "redirect:/funcionarios";
         }
 
-        // Verifica se email já existe neste tenant
-        if (usuarioRepository.existsByTenantIdAndEmail(tenantId, email)) {
-            redirectAttrs.addFlashAttribute("erro", "Email já registrado nesta loja.");
+        if (nome == null || nome.isBlank() || senha == null || senha.length() < 8) {
+            redirectAttrs.addFlashAttribute("erro", "Nome obrigatório e senha com pelo menos 8 caracteres.");
+            return "redirect:/funcionarios";
+        }
+
+        String emailNorm = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
+        if (emailNorm.isBlank()) {
+            redirectAttrs.addFlashAttribute("erro", "Email é obrigatório para o funcionário.");
+            return "redirect:/funcionarios";
+        }
+
+        // Verifica se email já existe globalmente (necessário para o login)
+        if (usuarioRepository.existsByEmailIgnoreCase(emailNorm)) {
+            redirectAttrs.addFlashAttribute("erro", "Email já registrado.");
             return "redirect:/funcionarios";
         }
 
@@ -110,8 +121,14 @@ public class FuncionarioController {
             return "redirect:/funcionarios";
         }
 
-        Usuario funcionario = authService.criarUsuario(
-                tenantId, nome, email, senha, roleEnum, dono.getId());
+        Usuario funcionario;
+        try {
+            funcionario = authService.criarUsuario(
+                    tenantId, nome, emailNorm, telefone, senha, roleEnum, dono.getId());
+        } catch (IllegalArgumentException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage());
+            return "redirect:/funcionarios";
+        }
 
         // Log de auditoria
         AuditoriaLog log = new AuditoriaLog();

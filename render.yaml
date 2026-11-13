@@ -1,14 +1,15 @@
 services:
+  # Build do Dockerfile e deploy automático quando os checks do GitHub passam
   - type: web
+    runtime: docker
     name: nanobanana-erp
-    env: java
     region: frankfurt
-    plan: free
-    branch: main
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/erp-1.0.0.jar
+    plan: 1c-2g # Sem hibernação: app responde rápido e não trava em produção
+    branch: master
+    dockerfilePath: ./Dockerfile
+    autoDeployTrigger: checksPass # Push na master só publica com CI verde
+    maxShutdownDelaySeconds: 60
     healthCheckPath: /actuator/health
-    autoDeploy: true
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -38,10 +39,22 @@ services:
         generateValue: true
       - key: SESSION_COOKIE_SECURE
         value: "true"
+      - key: APP_SUBSCRIPTION_PRICE
+        value: "350.00"
+      - key: MAX_DESCONTO_VENDEDOR_PERCENT
+        value: "10"
+      - key: APP_MPESA_NUMBER
+        value: "856810532"
+      - key: APP_EMOLA_NUMBER
+        value: "863237473"
+      - key: APP_WHATSAPP_NUMBER
+        value: "863237473"
 
-  - type: pserv
-    name: nanobanana-db
-    plan: free
-    database:
-      name: nanobanana
-      ipAllowList: []
+databases:
+  # PostgreSQL pago: sem expiração automática como no plano gratuito
+  - name: nanobanana-db
+    region: frankfurt
+    plan: 0.1c-256mb
+    databaseName: nanobanana
+    diskSizeGB: 10
+    ipAllowList: [] # Só a aplicação na rede privada do Render acessa o banco

@@ -74,33 +74,8 @@ public class Venda {
     @Column(columnDefinition = "TEXT")
     private String motivoCancelamento; // OBRIGATÓRIO se cancelar
 
-    @Column(length = 255)
-    private String hash; // anti-fraude
-
     @Column(columnDefinition = "TEXT")
     private String observacao;
-
-    @PrePersist
-    public void gerarHash() {
-        String conteudo = id + "|" + tenantId + "|" + total + "|" + dataHora + "|" + status;
-        this.hash = sha256(conteudo);
-    }
-
-    private String sha256(String input) {
-        try {
-            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     // Getters e Setters
     public UUID getId() { return id; }
@@ -150,9 +125,6 @@ public class Venda {
 
     public String getMotivoCancelamento() { return motivoCancelamento; }
     public void setMotivoCancelamento(String motivoCancelamento) { this.motivoCancelamento = motivoCancelamento; }
-
-    public String getHash() { return hash; }
-    public void setHash(String hash) { this.hash = hash; }
 
     public String getObservacao() { return observacao; }
     public void setObservacao(String observacao) { this.observacao = observacao; }

@@ -40,6 +40,10 @@ public class StockService {
     public Produto adicionarStock(UUID tenantId, UUID produtoId, int quantidade, UUID donoId,
                                   String fornecedor, String notaFiscal, BigDecimal precoCusto, String motivo) {
         
+        if (quantidade <= 0) {
+            throw new RuntimeException("A quantidade deve ser maior que zero");
+        }
+
         Produto produto = produtoRepository.findByTenantIdAndIdWithLock(tenantId, produtoId)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
@@ -77,6 +81,10 @@ public class StockService {
     public Produto baixarStock(UUID tenantId, UUID produtoId, int quantidade, UUID donoId,
                                BaixaStock.TipoBaixa tipoBaixa, String motivo) {
         
+        if (quantidade <= 0) {
+            throw new RuntimeException("A quantidade deve ser maior que zero");
+        }
+
         if (motivo == null || motivo.trim().isEmpty()) {
             throw new RuntimeException("Motivo da baixa é OBRIGATÓRIO");
         }
@@ -154,15 +162,32 @@ public class StockService {
 
     /**
      * Restaura stock quando venda é cancelada (APENAS DONO/GERENTE)
-     * Atomic com lock pessimista
+     * Atomic com lock pessimista e registra auditoria/entrada de stock
      */
     @Transactional
-    public void restaurarStockVenda(UUID tenantId, UUID produtoId, int quantidade) {
+    public void restaurarStockVenda(UUID tenantId, UUID produtoId, int quantidade, UUID usuarioId, UUID vendaId) {
+        if (quantidade <= 0) {
+            throw new RuntimeException("A quantidade deve ser maior que zero");
+        }
+
         Produto produto = produtoRepository.findByTenantIdAndIdWithLock(tenantId, produtoId)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
+        int stockAntigo = produto.getStockAtual();
         produto.setStockAtual(produto.getStockAtual() + quantidade);
         produtoRepository.save(produto);
+
+        EntradaStock entrada = new EntradaStock();
+        entrada.setTenantId(tenantId);
+        entrada.setProdutoId(produtoId);
+        entrada.setQuantidade(quantidade);
+        entrada.setDonoId(usuarioId);
+        entrada.setMotivo("Cancelamento da venda " + vendaId);
+        entradaStockRepository.save(entrada);
+
+        logAuditoria(tenantId, usuarioId, AuditoriaLog.Acao.ADICIONAR_STOCK, "produtos", produtoId,
+                "Stock: " + stockAntigo + " -> " + produto.getStockAtual(),
+                "Restauro por cancelamento da venda " + vendaId + ": +" + quantidade + " unidades");
     }
 
     /**

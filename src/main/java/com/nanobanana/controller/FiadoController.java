@@ -34,6 +34,9 @@ public class FiadoController {
     @Autowired
     private VendaRepository vendaRepository;
 
+    @Autowired
+    private AuditoriaLogRepository auditoriaLogRepository;
+
     /**
      * Lista todos os fiados (paginado, 25 por página).
      */
@@ -45,10 +48,10 @@ public class FiadoController {
         Usuario usuario = usuarioOpt.get();
         UUID tenantId = authService.getTenantIdLogado();
 
-        Page<Fiado> fiados = fiadoRepository.findByTenantId(tenantId,
+        Page<Fiado> fiados = fiadoRepository.findByTenantIdAndCanceladoFalse(tenantId,
                 PageRequest.of(Math.max(page, 0), 25, Sort.by(Sort.Direction.DESC, "dataCriacao")));
         BigDecimal totalFiado = fiadoRepository.totalFiadoNaoPago(tenantId);
-        long fiadosNaoPagos = fiadoRepository.countByTenantIdAndPago(tenantId, false);
+        long fiadosNaoPagos = fiadoRepository.countByTenantIdAndPagoAndCanceladoFalse(tenantId, false);
 
         model.addAttribute("usuario", usuario);
         model.addAttribute("fiados", fiados.getContent());
@@ -73,14 +76,26 @@ public class FiadoController {
         Optional<Fiado> fiadoOpt = fiadoRepository.findById(id);
         if (fiadoOpt.isPresent() && fiadoOpt.get().getTenantId().equals(tenantId)) {
             Fiado fiado = fiadoOpt.get();
+            if (fiado.isCancelado()) {
+                redirectAttrs.addFlashAttribute("erro", "Este fiado foi cancelado.");
+                return "redirect:/fiados";
+            }
+            if (fiado.isPago()) {
+                redirectAttrs.addFlashAttribute("sucesso", "Este fiado já estava marcado como pago.");
+                return "redirect:/fiados";
+            }
             fiado.setPago(true);
             fiado.setDataPagamento(LocalDateTime.now());
             fiadoRepository.save(fiado);
 
-            // Atualizar venda associada se existir
-            vendaRepository.findById(fiado.getVendaId()).ifPresent(venda -> {
-                // Fiado pago - registamos que foi quitado
-            });
+            AuditoriaLog log = new AuditoriaLog();
+            log.setTenantId(tenantId);
+            log.setUsuarioId(usuario.getId());
+            log.setAcao(AuditoriaLog.Acao.UPDATE);
+            log.setTabelaAfetada("fiados");
+            log.setRegistroId(fiado.getId());
+            log.setDadosNovos("Fiado marcado como pago. Valor: " + fiado.getValor() + " MZN");
+            auditoriaLogRepository.save(log);
 
             redirectAttrs.addFlashAttribute("sucesso", "Fiado de " + fiado.getNomeCliente() + " marcado como pago!");
         }

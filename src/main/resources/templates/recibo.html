@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root { --ink: #111; --muted: #666; --line: #ddd; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f4f5f7; color: var(--ink); }
+        .wrap { max-width: 420px; margin: 20px auto; padding: 0 12px; }
+        .actions { display: flex; gap: 8px; margin-bottom: 12px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #222; text-decoration: none; font-size: 14px; cursor: pointer; flex: 1; }
+        .btn-primary { background: #1f7a4d; color: #fff; border-color: #1f7a4d; }
+        .receipt { background: #fff; padding: 18px 16px; border: 1px solid var(--line); border-radius: 10px; }
+        .center { text-align: center; }
+        .store-name { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+        .muted { color: var(--muted); font-size: 12px; }
+        h1 { font-size: 14px; letter-spacing: 1px; margin: 12px 0 8px; }
+        .row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin: 4px 0; }
+        .row span:first-child { color: var(--muted); }
+        hr { border: 0; border-top: 1px dashed var(--line); margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 6px 0; vertical-align: top; }
+        th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+        td.qty, th.qty { text-align: center; width: 42px; }
+        td.val, th.val { text-align: right; white-space: nowrap; }
+        .totals .row { font-size: 14px; }
+        .totals .grand { font-size: 18px; font-weight: 700; margin-top: 6px; }
+        .totals .grand span:first-child { color: var(--ink); }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .ok { background: #e8f7ef; color: #1f7a4d; }
+        .cancel { background: #fdeaea; color: #b42318; }
+        .alert { margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; background: #e8f7ef; color: #1f7a4d; font-size: 14px; }
+        .footer { margin-top: 14px; font-size: 12px; }
+        @media print {
+            body { background: #fff; }
+            .wrap { margin: 0; max-width: none; }
+            .actions, .no-print { display: none !important; }
+            .receipt { border: 0; border-radius: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div th:if="${sucesso}" class="alert" th:text="${sucesso}"></div>
+
+    <div class="actions no-print">
+        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Imprimir</button>
+        <a class="btn" th:href="@{/pdv}"><i class="fas fa-cash-register"></i> Nova venda</a>
+        <a class="btn" th:href="@{/pdv/historico}"><i class="fas fa-history"></i> Histórico</a>
+        <a class="btn" th:if="${usuario != null and (usuario.role.name() == 'DONO' or usuario.role.name() == 'GERENTE') and venda.status.name() == 'CONCLUIDA'}" th:href="@{'/pdv/devolucao/' + ${venda.id}}"><i class="fas fa-undo"></i> Devolver</a>
+    </div>
+
+    <div class="receipt">
+        <div class="center">
+            <p class="store-name" th:text="${tenant != null ? tenant.nome : 'Loja'}">Loja</p>
+            <div class="muted" th:if="${tenant != null}">
+                <div th:if="${tenant.nui != null && !#strings.isEmpty(tenant.nui)}">NUI/NIF: <span th:text="${tenant.nui}"></span></div>
+                <div th:if="${tenant.telefone != null && !#strings.isEmpty(tenant.telefone)}">Tel: <span th:text="${tenant.telefone}"></span></div>
+                <div>
+                    <span th:if="${tenant.provincia != null}" th:text="${tenant.provincia}"></span><span th:if="${tenant.provincia != null && tenant.nacionalidade != null}">, </span><span th:if="${tenant.nacionalidade != null}" th:text="${tenant.nacionalidade}"></span>
+                </div>
+            </div>
+            <h1>RECIBO / COMPROVATIVO</h1>
+        </div>
+
+        <div class="row"><span>Nº Venda</span><span th:text="${#strings.substring(venda.id.toString(), 0, 8).toUpperCase()}">00000000</span></div>
+        <div class="row"><span>Data/Hora</span><span th:text="${#temporals.format(venda.dataHora, 'dd/MM/yyyy HH:mm')}">-</span></div>
+        <div class="row"><span>Atendente</span><span th:text="${vendedor != null ? vendedor.nome : '—'}">-</span></div>
+        <div class="row"><span>Estado</span>
+            <span>
+                <span th:if="${venda.status.name() == 'CONCLUIDA'}" class="badge ok">CONCLUÍDA</span>
+                <span th:if="${venda.status.name() == 'CANCELADA'}" class="badge cancel">CANCELADA</span>
+                <span th:if="${venda.status.name() == 'PENDENTE'}" class="badge" style="background:#fff4e5;color:#9a6700;">PENDENTE</span>
+            </span>
+        </div>
+
+        <hr>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th class="qty">Qtd</th>
+                    <th class="val">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${itens}">
+                    <td>
+                        <div th:text="${item.nomeProduto}">Produto</div>
+                        <div class="muted" th:text="${#numbers.formatDecimal(item.precoUnitario, 1, 'COMMA', 2, 'POINT')} + ' un'">0,00 un</div>
+                    </td>
+                    <td class="qty" th:text="${item.quantidade}">1</td>
+                    <td class="val" th:text="${#numbers.formatDecimal(item.subtotal, 1, 'COMMA', 2, 'POINT')}">0,00</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <div class="totals">
+            <div class="row"><span>Subtotal</span><span th:text="${#numbers.formatDecimal(venda.subtotal != null ? venda.subtotal : venda.total, 1, 'COMMA', 2, 'POINT')}">0,00</span></div>
+            <div class="row" th:if="${venda.desconto != null && venda.desconto.compareTo(T(java.math.BigDecimal).ZERO) > 0}"><span>Desconto</span><span th:text="'- ' + ${#numbers.formatDecimal(venda.desconto, 1, 'COMMA', 2, 'POINT')}">0,00</span></div>
+            <div class="row grand"><span>TOTAL</span><span th:text="${#numbers.formatDecimal(venda.total, 1, 'COMMA', 2, 'POINT')}">0,00</span></div>
+        </div>
+
+        <hr>
+
+        <div class="row"><span>Pagamento</span><span th:text="${venda.metodoPagamento}">CASH</span></div>
+        <div class="row" th:if="${venda.valorPago != null}"><span>Valor pago</span><span th:text="${#numbers.formatDecimal(venda.valorPago, 1, 'COMMA', 2, 'POINT')}">0,00</span></div>
+        <div class="row" th:if="${venda.troco != null}"><span>Troco</span><span th:text="${#numbers.formatDecimal(venda.troco, 1, 'COMMA', 2, 'POINT')}">0,00</span></div>
+        <div th:if="${venda.metodoPagamento != null && venda.metodoPagamento.name() == 'FIADO'}" class="muted" style="margin-top:6px;">
+            Cliente (fiado): <strong th:text="${venda.nomeClienteFiado}">-</strong>
+            <span th:if="${venda.telefoneClienteFiado != null && !#strings.isEmpty(venda.telefoneClienteFiado)}"> — <span th:text="${venda.telefoneClienteFiado}"></span></span>
+        </div>
+        <div th:if="${venda.status.name() == 'CANCELADA'}" class="muted" style="margin-top:8px; color:#b42318;">
+            Cancelada: <span th:text="${venda.motivoCancelamento}"></span>
+        </div>
+
+        <div class="footer center muted">
+            <p style="margin:10px 0 0;">Obrigado pela preferência!</p>
+            <p style="margin:4px 0 0;">NanoBanana ERP</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

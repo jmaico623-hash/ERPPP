@@ -19,11 +19,17 @@ public class Tenant {
     @Column(length = 100)
     private String nui; // Número de Identificação Fiscal
 
-    @Column(unique = true, length = 255)
+    @Column(length = 255)
     private String email;
 
     @Column(length = 50)
     private String telefone;
+
+    @Column(length = 100)
+    private String nacionalidade;
+
+    @Column(length = 100)
+    private String provincia;
 
     @Column(columnDefinition = "TEXT")
     private String endereco;
@@ -71,6 +77,12 @@ public class Tenant {
 
     public String getTelefone() { return telefone; }
     public void setTelefone(String telefone) { this.telefone = telefone; }
+
+    public String getNacionalidade() { return nacionalidade; }
+    public void setNacionalidade(String nacionalidade) { this.nacionalidade = nacionalidade; }
+
+    public String getProvincia() { return provincia; }
+    public void setProvincia(String provincia) { this.provincia = provincia; }
 
     public String getEndereco() { return endereco; }
     public void setEndereco(String endereco) { this.endereco = endereco; }

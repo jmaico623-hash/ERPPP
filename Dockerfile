@@ -40,7 +40,7 @@ USER nano
 ENV SPRING_PROFILES_ACTIVE=prod
 
 # Configurações JVM otimizadas para containers
-ENV JAVA_OPTS="-Xms512m -Xmx1024m \
+ENV JAVA_OPTS="-Xms256m -Xmx768m \
     -XX:+UseG1GC \
     -XX:MaxGCPauseMillis=200 \
     -XX:+UseStringDeduplication \

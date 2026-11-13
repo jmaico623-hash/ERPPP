@@ -72,6 +72,11 @@ Criadas apenas com `app.seed.enabled=true` (perfil **dev**):
 | `SESSION_COOKIE_SECURE` | `true` atrás de HTTPS (padrão em prod) |
 | `PORT` | Porta HTTP (padrão 8080) |
 
+| `APP_MPESA_NUMBER` | Número M-Pesa mostrado na renovação |
+| `APP_EMOLA_NUMBER` | Número e-Mola mostrado na renovação |
+| `APP_WHATSAPP_NUMBER` | WhatsApp de suporte para comprovativos |
+| `APP_SUBSCRIPTION_PRICE` | Preço mensal exibido no app/admin (padrão: `350.00`) |
+
 Copie `.env.example` para `.env` ao usar Docker Compose.
 
 ## 🐳 Docker
@@ -134,3 +139,4 @@ src/main/resources/
 - **350,00 MZN/mês** após o teste
 - Pagamento: M-Pesa, e-Mola, Cash
 - Bloqueio automático após expiração
+- Renovação manual: o dono solicita pelo app em `/assinatura`; o super admin aprova em **Admin → Pagamentos pendentes**

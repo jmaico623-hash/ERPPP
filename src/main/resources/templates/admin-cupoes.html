@@ -28,12 +28,14 @@
             </ul>
         </aside>
         <main class="content admin-content" style="width:100%;">
+            <div th:replace="~{admin-flash :: flash}"></div>
+
             <h1>🎁 Cupões de Desconto</h1>
             <div class="assinatura-card">
                 <h2>Criar Novo Cupão</h2>
                 <form th:action="@{/admin/cupao/criar}" method="post" class="inline-form">
-                    <input type="text" name="codigo" placeholder="Código (ex: PROMO10)" required>
-                    <input type="number" name="descontoPercent" placeholder="% Desconto" min="1" max="100" required>
+                    <input type="text" name="codigo" placeholder="Código (ex: PROMO10)" required pattern="[A-Za-z0-9_-]{3,50}" title="3–50 caracteres: letras, números, '-' ou '_'">
+                    <input type="number" name="descontoPercent" placeholder="% Desconto" min="0.01" max="100" step="0.01" required>
                     <select name="clienteId">
                         <option value="">Todos os clientes</option>
                         <option th:each="c : ${clientes}" th:value="${c.id}" th:text="${c.nomeNegocio}"></option>
@@ -41,7 +43,22 @@
                     <button type="submit" class="btn-success"><i class="fas fa-plus"></i> Criar Cupão</button>
                 </form>
             </div>
-            <p style="color:#7f8c8d;margin-top:20px;">⚠️ Cupões são registados mas ainda não aplicados automaticamente nas vendas.</p>
+
+            <h2 style="margin-top:30px;">Cupões criados</h2>
+            <table class="nano-table">
+                <thead><tr><th>Código</th><th>Desconto</th><th>Cliente</th><th>Status</th><th>Criado em</th></tr></thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(cupoms)}"><td colspan="5" style="text-align:center;">Nenhum cupão criado.</td></tr>
+                    <tr th:each="c : ${cupoms}">
+                        <td th:text="${c.codigo}"></td>
+                        <td th:text="${c.descontoPercent} + '%'"></td>
+                        <td th:text="${c.tenantId} ?: 'Todos os clientes'"></td>
+                        <td><span th:if="${c.ativo}" class="badge badge-success">Ativo</span><span th:unless="${c.ativo}" class="badge badge-danger">Inativo</span></td>
+                        <td th:text="${#temporals.format(c.criadoEm, 'dd/MM/yyyy HH:mm')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="color:#7f8c8d;margin-top:20px;">⚠️ Cupões são registados mas ainda não são aplicados automaticamente nas vendas.</p>
         </main>
     </div>
 </body>

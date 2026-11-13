@@ -35,6 +35,12 @@ public class VendaItem {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal custoUnitario;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal custoTotal;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataHora = LocalDateTime.now();
 
@@ -59,6 +65,12 @@ public class VendaItem {
 
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+
+    public BigDecimal getCustoUnitario() { return custoUnitario; }
+    public void setCustoUnitario(BigDecimal custoUnitario) { this.custoUnitario = custoUnitario; }
+
+    public BigDecimal getCustoTotal() { return custoTotal; }
+    public void setCustoTotal(BigDecimal custoTotal) { this.custoTotal = custoTotal; }
 
     public LocalDateTime getDataHora() { return dataHora; }
     public void setDataHora(LocalDateTime dataHora) { this.dataHora = dataHora; }

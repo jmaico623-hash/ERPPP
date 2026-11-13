@@ -28,6 +28,8 @@
             </ul>
         </aside>
         <main class="content admin-content" style="width:100%;">
+            <div th:replace="~{admin-flash :: flash}"></div>
+
             <h1>💳 Histórico de Pagamentos</h1>
             <table class="nano-table">
                 <thead><tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Método</th><th>Referência</th><th>Data</th><th>Estado</th></tr></thead>

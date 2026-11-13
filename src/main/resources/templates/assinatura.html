@@ -30,6 +30,13 @@
         <h1>Assinatura Expirada</h1>
         <p>O período de teste da sua loja expirou.</p>
 
+        <div th:if="${erro}" class="alert alert-error" style="background:#fee;padding:12px;border-radius:8px;color:#c0392b;margin:12px 0;text-align:left;">
+            <span th:text="${erro}"></span>
+        </div>
+        <div th:if="${sucesso}" class="alert alert-success" style="background:#eafaf1;padding:12px;border-radius:8px;color:#27ae60;margin:12px 0;text-align:left;">
+            <span th:text="${sucesso}"></span>
+        </div>
+
         <div class="info-box" th:if="${tenant}">
             <h3 th:text="${tenant.nome}">Loja</h3>
             <p><strong>Expirou em:</strong> <span th:text="${tenant.dataExpiracao}">-</span></p>
@@ -37,27 +44,61 @@
         </div>
 
         <h3>💰 Renovar Assinatura</h3>
-        <p style="font-size: 32px; font-weight: 700; color: #667eea; margin: 15px 0;">350 MZN/mês</p>
+        <p style="font-size: 32px; font-weight: 700; color: #667eea; margin: 15px 0;" th:text="${subscriptionPrice} + ' MZN/mês'">350 MZN/mês</p>
 
         <div class="payment-methods">
             <div class="payment-method">
                 <i class="fas fa-mobile-alt" style="color: #4caf50;"></i>
                 <p><strong>M-Pesa</strong></p>
-                <p>84 123 4567</p>
+                <p th:text="${mpesaNumber}">84 123 4567</p>
             </div>
             <div class="payment-method">
                 <i class="fas fa-mobile-alt" style="color: #ff9800;"></i>
                 <p><strong>e-Mola</strong></p>
-                <p>86 123 4567</p>
+                <p th:text="${emolaNumber}">86 123 4567</p>
             </div>
         </div>
 
         <div class="info-box">
             <h3>📲 Como pagar:</h3>
-            <p>1. Envie 350 MZN para um dos números acima</p>
-            <p>2. Envie comprovativo via WhatsApp: <strong>+258 84 123 4567</strong></p>
-            <p>3. Sua loja será ativada em até 2 horas</p>
+            <p>1. Envie <strong th:text="${subscriptionPrice} + ' MZN'">350 MZN</strong> para um dos números acima</p>
+            <p>2. Volte aqui e preencha o formulário com a referência do pagamento</p>
+            <p>3. Sua loja será ativada em até 2 horas úteis</p>
         </div>
+
+        <div th:if="${pedidoPendente}" class="info-box" style="border-left:4px solid #f39c12;">
+            <h3>⏳ Pedido pendente</h3>
+            <p>Já existe um pedido de renovação em análise para esta loja. Aguarde a confirmação antes de enviar outro.</p>
+        </div>
+
+        <form th:action="@{/assinatura/solicitar}" method="post" class="info-box" style="text-align:left;border:0;width:100%;">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <h3>📝 Enviar pedido de renovação</h3>
+            <p style="margin-bottom:12px;"><strong>Método:</strong></p>
+            <select name="metodo" required aria-label="Método de pagamento" style="width:100%;padding:10px;margin-bottom:12px;">
+                <option value="mpesa">M-Pesa</option>
+                <option value="emola">e-Mola</option>
+                <option value="transferencia">Transferência bancária</option>
+                <option value="cash">Dinheiro</option>
+            </select>
+            <p style="margin-bottom:12px;"><strong>Referência / ID da transação:</strong></p>
+            <input type="text" name="referencia" placeholder="Ex: 8A3B1234" required minlength="4" maxlength="100"
+                   pattern="[A-Za-z0-9 _.-]{4,100}" style="width:100%;padding:10px;margin-bottom:12px;" aria-label="Referência do pagamento">
+            <button type="submit" class="btn" style="width:100%;border:0;cursor:pointer;"><i class="fas fa-paper-plane"></i> Enviar pedido</button>
+        </form>
+
+        <h3 th:if="${!#lists.isEmpty(pagamentos)}" style="margin-top:18px;">Histórico de pagamentos</h3>
+        <table th:if="${!#lists.isEmpty(pagamentos)}" style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px;">
+            <thead><tr><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px;">Data</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px;">Método</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px;">Referência</th><th style="text-align:left;border-bottom:1px solid #ddd;padding:8px;">Estado</th></tr></thead>
+            <tbody>
+                <tr th:each="p : ${pagamentos}">
+                    <td style="padding:8px;border-bottom:1px solid #f0f0f0;" th:text="${p.data}">-</td>
+                    <td style="padding:8px;border-bottom:1px solid #f0f0f0;" th:text="${p.metodo}">-</td>
+                    <td style="padding:8px;border-bottom:1px solid #f0f0f0;" th:text="${p.referencia}">-</td>
+                    <td style="padding:8px;border-bottom:1px solid #f0f0f0;"><span th:if="${p.confirmado}" style="color:#27ae60;font-weight:700;">Confirmado</span><span th:unless="${p.confirmado}" style="color:#e67e22;font-weight:700;">Pendente</span></td>
+                </tr>
+            </tbody>
+        </table>
 
         <a href="/logout" class="btn"><i class="fas fa-sign-in-alt"></i> Voltar ao Login</a>
     </div>

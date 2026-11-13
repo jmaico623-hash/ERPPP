@@ -7,6 +7,7 @@ import com.nanobanana.model.Usuario;
 import com.nanobanana.model.Venda;
 import com.nanobanana.model.VendaItem;
 import com.nanobanana.repository.AlertaSistemaRepository;
+import com.nanobanana.repository.AuditoriaLogRepository;
 import com.nanobanana.repository.FiadoRepository;
 import com.nanobanana.repository.ProdutoRepository;
 import com.nanobanana.repository.VendaItemRepository;
@@ -41,6 +42,7 @@ class VendaServiceTest {
     @Mock private FiadoRepository fiadoRepository;
     @Mock private StockService stockService;
     @Mock private AlertaSistemaRepository alertaSistemaRepository;
+    @Mock private AuditoriaLogRepository auditoriaLogRepository;
 
     @InjectMocks
     private VendaService vendaService;
@@ -49,6 +51,7 @@ class VendaServiceTest {
     private UUID vendedorId;
     private UUID produtoId;
     private Produto produto;
+    private Usuario vendedor;
 
     @BeforeEach
     void setUp() {
@@ -68,6 +71,12 @@ class VendaServiceTest {
             if (v.getId() == null) v.setId(UUID.randomUUID());
             return v;
         });
+
+        vendedor = new Usuario();
+        vendedor.setId(vendedorId);
+        vendedor.setTenantId(tenantId);
+        vendedor.setNome("Vendedor");
+        vendedor.setRole(Usuario.Role.DONO);
     }
 
     @Test
@@ -75,7 +84,7 @@ class VendaServiceTest {
         when(produtoRepository.findByTenantIdAndId(tenantId, produtoId)).thenReturn(Optional.of(produto));
 
         Venda venda = vendaService.finalizarVenda(
-                tenantId, vendedorId,
+                tenantId, vendedor,
                 List.of(new VendaItemRequest(produtoId, 2)),
                 BigDecimal.ZERO, Venda.MetodoPagamento.CASH, null, null, null);
 
@@ -92,7 +101,7 @@ class VendaServiceTest {
     @Test
     void finalizarVendaSemItensFalha() {
         assertThatThrownBy(() -> vendaService.finalizarVenda(
-                tenantId, vendedorId, List.of(), BigDecimal.ZERO,
+                tenantId, vendedor, List.of(), BigDecimal.ZERO,
                 Venda.MetodoPagamento.CASH, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("pelo menos 1 produto");
@@ -104,7 +113,7 @@ class VendaServiceTest {
         when(produtoRepository.findByTenantIdAndId(tenantId, produtoId)).thenReturn(Optional.of(produto));
 
         assertThatThrownBy(() -> vendaService.finalizarVenda(
-                tenantId, vendedorId,
+                tenantId, vendedor,
                 List.of(new VendaItemRequest(produtoId, 5)),
                 BigDecimal.ZERO, Venda.MetodoPagamento.CASH, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -114,11 +123,29 @@ class VendaServiceTest {
     }
 
     @Test
+    void vendedorNaoPodeAplicarDescontoAcimaDoLimite() {
+        Usuario vendedorComum = new Usuario();
+        vendedorComum.setId(UUID.randomUUID());
+        vendedorComum.setTenantId(tenantId);
+        vendedorComum.setNome("Vendedor");
+        vendedorComum.setRole(Usuario.Role.VENDEDOR);
+
+        when(produtoRepository.findByTenantIdAndId(tenantId, produtoId)).thenReturn(Optional.of(produto));
+
+        assertThatThrownBy(() -> vendaService.finalizarVenda(
+                tenantId, vendedorComum,
+                List.of(new VendaItemRequest(produtoId, 1)),
+                new BigDecimal("36.00"), Venda.MetodoPagamento.CASH, null, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Desconto acima do limite");
+    }
+
+    @Test
     void finalizarVendaComDescontoMaiorQueSubtotalFalha() {
         when(produtoRepository.findByTenantIdAndId(tenantId, produtoId)).thenReturn(Optional.of(produto));
 
         assertThatThrownBy(() -> vendaService.finalizarVenda(
-                tenantId, vendedorId,
+                tenantId, vendedor,
                 List.of(new VendaItemRequest(produtoId, 1)),
                 new BigDecimal("999.00"), Venda.MetodoPagamento.CASH, null, null, null))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -153,14 +180,15 @@ class VendaServiceTest {
         item.setProdutoId(produtoId);
         item.setQuantidade(2);
 
-        when(vendaRepository.findById(venda.getId())).thenReturn(Optional.of(venda));
+        when(vendaRepository.findByIdAndTenantIdWithLock(venda.getId(), tenantId)).thenReturn(Optional.of(venda));
         when(vendaItemRepository.findByVendaId(venda.getId())).thenReturn(List.of(item));
 
         vendaService.cancelarVenda(tenantId, venda.getId(), dono, "cliente desistiu");
 
         assertThat(venda.getStatus()).isEqualTo(Venda.Status.CANCELADA);
         assertThat(venda.getCanceladaPor()).isEqualTo(dono.getId());
-        verify(stockService).restaurarStockVenda(tenantId, produtoId, 2);
+        verify(stockService).restaurarStockVenda(tenantId, produtoId, 2, dono.getId(), venda.getId());
+        verify(auditoriaLogRepository).save(any(com.nanobanana.model.AuditoriaLog.class));
         verify(alertaSistemaRepository).save(any(AlertaSistema.class));
         verify(vendaRepository).save(venda);
     }

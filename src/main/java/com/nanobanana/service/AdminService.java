@@ -4,6 +4,8 @@ import com.nanobanana.model.Pagamento;
 import com.nanobanana.model.Tenant;
 import com.nanobanana.model.Usuario;
 import com.nanobanana.model.Venda;
+import com.nanobanana.model.Fiado;
+import com.nanobanana.model.AuditoriaLog;
 import com.nanobanana.repository.AlertaSistemaRepository;
 import com.nanobanana.repository.AuditoriaLogRepository;
 import com.nanobanana.repository.BaixaStockRepository;
@@ -73,13 +75,21 @@ public class AdminService {
         Pagamento pagamento = pagamentoRepository.findById(pagamentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Pagamento não encontrado"));
 
+        boolean jaConfirmado = pagamento.isConfirmado();
+        if (jaConfirmado) {
+            return tenantRepository.findById(pagamento.getClienteId())
+                    .orElseThrow(() -> new IllegalArgumentException("Cliente do pagamento não encontrado"));
+        }
+
         pagamento.confirmar();
         pagamentoRepository.save(pagamento);
 
         Tenant tenant = tenantRepository.findById(pagamento.getClienteId())
                 .orElseThrow(() -> new IllegalArgumentException("Cliente do pagamento não encontrado"));
 
-        tenant.setPlano("pago");
+        if (!"premium".equals(tenant.getPlano())) {
+            tenant.setPlano("pago");
+        }
         tenant.setAtivo(true);
         tenant.setDataExpiracao(LocalDate.now().plusMonths(1));
         return tenantRepository.save(tenant);
@@ -88,16 +98,19 @@ public class AdminService {
     @Transactional
     public Tenant ativarCliente(UUID tenantId) {
         Tenant tenant = buscarTenant(tenantId);
-        tenant.setPlano("pago");
         tenant.setAtivo(true);
-        tenant.setDataExpiracao(LocalDate.now().plusMonths(1));
+        if (!"premium".equals(tenant.getPlano())) {
+            tenant.setPlano("pago");
+        }
+        if (tenant.getDataExpiracao() == null || tenant.expirado()) {
+            tenant.setDataExpiracao(LocalDate.now().plusMonths(1));
+        }
         return tenantRepository.save(tenant);
     }
 
     @Transactional
     public Tenant desativarCliente(UUID tenantId) {
         Tenant tenant = buscarTenant(tenantId);
-        tenant.setPlano("expirado");
         tenant.setDataExpiracao(LocalDate.now().minusDays(1));
         tenant.setAtivo(false);
         return tenantRepository.save(tenant);
@@ -106,7 +119,6 @@ public class AdminService {
     @Transactional
     public Tenant estenderTeste(UUID tenantId, int dias) {
         Tenant tenant = buscarTenant(tenantId);
-        tenant.setPlano("teste");
         tenant.setAtivo(true);
         tenant.setDataExpiracao(LocalDate.now().plusDays(dias));
         return tenantRepository.save(tenant);
@@ -117,8 +129,8 @@ public class AdminService {
      */
     @Transactional
     public void resetSenhaDono(UUID tenantId, String novaSenha) {
-        if (novaSenha == null || novaSenha.isBlank()) {
-            throw new IllegalArgumentException("A nova senha é obrigatória");
+        if (novaSenha == null || novaSenha.length() < 8) {
+            throw new IllegalArgumentException("A nova senha deve ter pelo menos 8 caracteres");
         }
 
         Usuario dono = usuarioRepository.findByTenantIdAndRole(tenantId, Usuario.Role.DONO)
@@ -131,36 +143,74 @@ public class AdminService {
     }
 
     /**
-     * Remove um cliente e todos os dados relacionados, respeitando as FKs.
+     * Remove os dados pessoais do cliente sem destruir o histórico financeiro.
+     * O tenant e os registos ligados a ele são anonimizados e desativados.
      */
     @Transactional
     public void apagarCliente(UUID tenantId) {
         Tenant tenant = buscarTenant(tenantId);
+        String deletedEmail = "apagado-" + UUID.randomUUID() + "@deleted.local";
 
         List<Venda> vendas = vendaRepository.findByTenantId(tenantId);
+        for (Venda venda : vendas) {
+            if (venda.getNomeClienteFiado() != null) {
+                venda.setNomeClienteFiado("Cliente removido");
+            }
+            venda.setTelefoneClienteFiado(null);
+        }
         if (!vendas.isEmpty()) {
-            List<UUID> vendaIds = vendas.stream().map(Venda::getId).toList();
-            vendaItemRepository.deleteAll(vendaItemRepository.findByVendaIdIn(vendaIds));
+            vendaRepository.saveAll(vendas);
         }
 
-        fiadoRepository.deleteAll(fiadoRepository.findByTenantId(tenantId));
-        vendaRepository.deleteAll(vendas);
+        List<Fiado> fiados = fiadoRepository.findByTenantId(tenantId);
+        for (Fiado fiado : fiados) {
+            fiado.setNomeCliente("Cliente removido");
+            fiado.setTelefoneCliente(null);
+        }
+        if (!fiados.isEmpty()) {
+            fiadoRepository.saveAll(fiados);
+        }
 
-        baixaStockRepository.deleteAll(baixaStockRepository.findByTenantId(tenantId));
-        entradaStockRepository.deleteAll(entradaStockRepository.findByTenantId(tenantId));
-        alertaSistemaRepository.deleteAll(alertaSistemaRepository.findByTenantId(tenantId));
-        auditoriaLogRepository.deleteAll(auditoriaLogRepository.findByTenantId(tenantId));
-        produtoRepository.deleteAll(produtoRepository.findByTenantId(tenantId));
+        List<Usuario> usuarios = usuarioRepository.findByTenantId(tenantId);
+        for (Usuario usuario : usuarios) {
+            usuario.setNome("Usuário removido");
+            usuario.setEmail("apagado-" + UUID.randomUUID() + "@deleted.local");
+            usuario.setTelefone(null);
+            usuario.setSenha(passwordEncoder.encode(UUID.randomUUID().toString()));
+            usuario.setAtivo(false);
+            usuario.setBloqueado(true);
+        }
+        if (!usuarios.isEmpty()) {
+            usuarioRepository.saveAll(usuarios);
+        }
 
-        List<Pagamento> pagamentos = pagamentoRepository.findAll()
-                .stream()
-                .filter(p -> tenantId.equals(p.getClienteId()))
-                .toList();
-        pagamentoRepository.deleteAll(pagamentos);
+        List<Pagamento> pagamentos = pagamentoRepository.findByClienteId(tenantId);
+        for (Pagamento pagamento : pagamentos) {
+            pagamento.setReferencia(null);
+        }
+        if (!pagamentos.isEmpty()) {
+            pagamentoRepository.saveAll(pagamentos);
+        }
 
-        usuarioRepository.deleteAll(usuarioRepository.findByTenantId(tenantId));
+        tenant.setNome("Cliente removido");
+        tenant.setEmail(deletedEmail);
+        tenant.setNui(null);
+        tenant.setTelefone(null);
+        tenant.setEndereco(null);
+        tenant.setPlano("expirado");
+        tenant.setAtivo(false);
+        tenant.setDataExpiracao(LocalDate.now().minusDays(1));
+        tenant.setAlertasAtivos(false);
+        tenant.setAuditoriaStock(false);
+        tenantRepository.save(tenant);
 
-        tenantRepository.delete(tenant);
+        AuditoriaLog log = new AuditoriaLog();
+        log.setTenantId(tenantId);
+        log.setAcao(AuditoriaLog.Acao.DELETE);
+        log.setTabelaAfetada("tenants");
+        log.setRegistroId(tenantId);
+        log.setDadosNovos("Cliente anonimizado e desativado");
+        auditoriaLogRepository.save(log);
     }
 
     private Tenant buscarTenant(UUID tenantId) {

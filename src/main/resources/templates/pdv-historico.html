@@ -60,6 +60,8 @@
                         <th>Pagamento</th>
                         <th>Status</th>
                         <th>Data/Hora</th>
+                        <th>Recibo</th>
+                        <th th:if="${isDono || isGerente}">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -73,9 +75,14 @@
                             <span th:if="${venda.status.name() == 'CANCELADA'}" class="badge badge-danger">Cancelada</span>
                         </td>
                         <td th:text="${#temporals.format(venda.dataHora, 'dd/MM/yyyy HH:mm')}">-</td>
+                        <td><a th:href="@{'/pdv/recibo/' + ${venda.id}}" class="badge badge-info" style="text-decoration:none;"><i class="fas fa-receipt"></i> Ver</a></td>
+                        <td th:if="${isDono || isGerente}">
+                            <a th:if="${venda.status.name() == 'CONCLUIDA'}" th:href="@{'/pdv/devolucao/' + ${venda.id}}" class="badge badge-warning" style="text-decoration:none;"><i class="fas fa-undo"></i> Devolver</a>
+                            <span th:unless="${venda.status.name() == 'CONCLUIDA'}" style="color:#999;">—</span>
+                        </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(vendas)}">
-                        <td colspan="6" style="text-align: center; color: #999; padding: 40px;">Nenhuma venda encontrada</td>
+                        <td th:attr="colspan=${(isDono || isGerente) ? 8 : 7}" style="text-align: center; color: #999; padding: 40px;">Nenhuma venda encontrada</td>
                     </tr>
                 </tbody>
             </table>

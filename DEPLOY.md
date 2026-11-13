@@ -14,9 +14,9 @@ Deploy em produção usando **Render.com** (recomendado) ou **Docker**.
 git init
 git add .
 git commit -m "NanoBanana ERP"
-git branch -M main
+git branch -M master
 git remote add origin https://github.com/SEU_USER/nanobanana-erp.git
-git push -u origin main
+git push -u origin master
 ```
 
 ## 2️⃣ Deploy no Render (Blueprint)
@@ -24,11 +24,12 @@ git push -u origin main
 1. Acesse **render.com** → **New +** → **Blueprint**.
 2. Selecione o repositório `nanobanana-erp`.
 3. O Render lê o `render.yaml` e cria:
-   - **Web Service** Java (build `./mvnw clean package -DskipTests`)
-   - **PostgreSQL** gratuito (`nanobanana-db`)
+   - **Web Service Docker** (build pelo `Dockerfile`, plano `1c-2g`)
+   - **PostgreSQL** pago (`nanobanana-db`, plano `0.1c-256mb`, 10 GB)
    - Variáveis de conexão (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`)
    - `ADMIN_PASSWORD` gerada automaticamente
 4. Clique em **Apply** e aguarde o build (~3–5 min).
+5. Faça push para `master`; o Render publica automaticamente **somente após o CI ficar verde** (`autoDeployTrigger: checksPass`).
 
 ### Variáveis de ambiente
 
@@ -60,7 +61,7 @@ git commit -m "minha alteracao"
 git push
 ```
 
-O Render recompila e reinicia automaticamente.
+O push na `master` inicia o CI (`GitHub Actions`). Se os checks passarem, o Render publica automaticamente porque está configurado com `autoDeployTrigger: checksPass`.
 
 ## 🐳 Deploy com Docker
 

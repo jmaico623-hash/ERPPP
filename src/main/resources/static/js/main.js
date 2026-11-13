@@ -36,7 +36,19 @@ function formatMZN(value) {
 
 /** Parse de string MZN para número */
 function parseMZN(str) {
-    return parseFloat(String(str).replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+    if (typeof str === 'number') return isFinite(str) ? str : 0;
+    if (str == null) return 0;
+    let s = String(str).replace(/[^\d.,-]/g, '').trim();
+    if (!s) return 0;
+    const temVirgula = s.includes(',');
+    const temPonto = s.includes('.');
+    if (temVirgula && temPonto) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else if (temVirgula) {
+        s = s.replace(',', '.');
+    }
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
 }
 
 /** Formatação de data */
@@ -122,7 +134,7 @@ function showToast(message, type = 'success', duration = 4000) {
     };
     const classes = { 
         success: 'alert-success', 
-        error: 'alert-error', 
+        error: 'alert-danger', 
         warning: 'alert-warning', 
         info: 'alert-info' 
     };

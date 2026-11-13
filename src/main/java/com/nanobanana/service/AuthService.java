@@ -14,8 +14,11 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.nanobanana.util.TelefoneUtil;
 
 @Service
 public class AuthService {
@@ -33,14 +36,27 @@ public class AuthService {
     private int maxLoginAttempts = 5;
 
     /**
-     * Faz login de um usuário
+     * Faz login de um usuário por email ou telefone
      * Transacional com lock pessimista para evitar race condition nas tentativas de login
      */
     @Transactional
-    public Optional<Usuario> login(String email, String senha, HttpSession session) {
-        // Busca usuário por email COM LOCK PESSIMISTA
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByEmailWithLock(email);
-        
+    public Optional<Usuario> login(String identificador, String senha, HttpSession session) {
+        if (identificador == null || identificador.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        String id = identificador.trim();
+        // Email e telefone são identificadores distintos: o email é comparado
+        // sem distinção de maiúsculas/minúsculas; o telefone é comparado apenas
+        // pelos dígitos, aceitando espaços, +258, 00258, etc.
+        Optional<Usuario> usuarioOpt;
+        if (id.contains("@")) {
+            usuarioOpt = usuarioRepository.findByIdentificadorWithLock(id.toLowerCase(Locale.ROOT));
+        } else {
+            var telefones = TelefoneUtil.variantes(id);
+            usuarioOpt = telefones.isEmpty()
+                    ? Optional.empty()
+                    : usuarioRepository.findFirstByTelefoneIn(telefones);
+        }
         if (usuarioOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -70,7 +86,13 @@ public class AuthService {
             return Optional.empty();
         }
 
-        // Login sucesso - reseta tentativas
+        // Login sucesso - verifica se o tenant está ativo antes de criar a sessão
+        Tenant tenant = tenantRepository.findById(usuario.getTenantId()).orElse(null);
+        if (tenant == null || !tenant.isAtivo()) {
+            return Optional.empty();
+        }
+
+        // Reseta tentativas
         usuario.setTentativasFalhas(0);
         usuario.setUltimoLogin(LocalDateTime.now());
         usuarioRepository.save(usuario);
@@ -88,12 +110,14 @@ public class AuthService {
         session.setAttribute("usuarioId", usuario.getId());
         session.setAttribute("usuarioNome", usuario.getNome());
         session.setAttribute("usuarioEmail", usuario.getEmail());
+        session.setAttribute("usuarioTelefone", usuario.getTelefone());
         session.setAttribute("usuarioRole", usuario.getRole().name());
         session.setAttribute("tenantId", usuario.getTenantId());
     }
 
     /**
      * Obtém usuário logado da sessão
+     * Revalida ativo/bloqueado e tenant ativo a cada acesso.
      */
     public Optional<Usuario> getUsuarioLogado() {
         HttpSession session = getSession();
@@ -101,12 +125,29 @@ public class AuthService {
             return Optional.empty();
         }
         UUID usuarioId = (UUID) session.getAttribute("usuarioId");
-        
+
         if (usuarioId == null) {
             return Optional.empty();
         }
 
-        return usuarioRepository.findById(usuarioId);
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
+        if (usuarioOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Usuario usuario = usuarioOpt.get();
+        if (!usuario.isAtivo() || usuario.isBloqueado()) {
+            session.invalidate();
+            return Optional.empty();
+        }
+
+        Tenant tenant = tenantRepository.findById(usuario.getTenantId()).orElse(null);
+        if (tenant == null || !tenant.isAtivo()) {
+            session.invalidate();
+            return Optional.empty();
+        }
+
+        return Optional.of(usuario);
     }
 
     /**
@@ -178,15 +219,28 @@ public class AuthService {
      * Cria um novo usuário (apenas DONO pode)
      */
     @Transactional
-    public Usuario criarUsuario(UUID tenantId, String nome, String email, String senha, Usuario.Role role, UUID criadoPor) {
-        // Verifica se email já existe no tenant (double-check)
-        if (usuarioRepository.existsByTenantIdAndEmail(tenantId, email)) {
-            throw new IllegalArgumentException("Email já registrado nesta loja.");
+    public Usuario criarUsuario(UUID tenantId, String nome, String email, String telefone, String senha,
+                                Usuario.Role role, UUID criadoPor) {
+        String emailNorm = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+        String telefoneNorm = TelefoneUtil.normalizar(telefone);
+
+        // Verifica se email já existe globalmente (double-check)
+        if (!emailNorm.isEmpty() && usuarioRepository.existsByEmailIgnoreCase(emailNorm)) {
+            throw new IllegalArgumentException("Email já registrado.");
         }
+        if (!telefoneNorm.isEmpty()) {
+            var telefones = TelefoneUtil.variantes(telefoneNorm);
+            if (usuarioRepository.existsByTelefoneIn(telefones)
+                    || tenantRepository.existsByTelefoneIn(telefones)) {
+                throw new IllegalArgumentException("Telefone já registrado.");
+            }
+        }
+
         Usuario usuario = new Usuario();
         usuario.setTenantId(tenantId);
         usuario.setNome(nome);
-        usuario.setEmail(email);
+        usuario.setEmail(emailNorm.isEmpty() ? null : emailNorm);
+        usuario.setTelefone(telefoneNorm.isEmpty() ? null : telefoneNorm);
         usuario.setSenha(passwordEncoder.encode(senha)); // Hash com BCrypt
         usuario.setRole(role);
         usuario.setCriadoPor(criadoPor);

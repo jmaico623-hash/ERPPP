@@ -99,7 +99,7 @@ class AdminServiceTest {
 
         Tenant resultado = adminService.desativarCliente(tenant.getId());
 
-        assertThat(resultado.getPlano()).isEqualTo("expirado");
+        assertThat(resultado.getPlano()).isEqualTo("teste");
         assertThat(resultado.isAtivo()).isFalse();
         assertThat(resultado.expirado()).isTrue();
     }
@@ -137,7 +137,7 @@ class AdminServiceTest {
         when(usuarioRepository.findByTenantIdAndRole(tenant.getId(), Usuario.Role.DONO))
                 .thenReturn(List.of());
 
-        assertThatThrownBy(() -> adminService.resetSenhaDono(tenant.getId(), "x"))
+        assertThatThrownBy(() -> adminService.resetSenhaDono(tenant.getId(), "senha-forte"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("DONO");
     }
@@ -153,9 +153,12 @@ class AdminServiceTest {
 
         adminService.apagarCliente(tenant.getId());
 
-        verify(tenantRepository).delete(tenant);
-        verify(usuarioRepository).deleteAll(List.of());
-        verify(produtoRepository).deleteAll(List.of());
-        verify(vendaRepository).deleteAll(List.of());
+        assertThat(tenant.isAtivo()).isFalse();
+        assertThat(tenant.expirado()).isTrue();
+        verify(tenantRepository).save(tenant);
+        verify(usuarioRepository, never()).deleteAll(anyList());
+        verify(vendaRepository, never()).deleteAll(anyList());
+        verify(produtoRepository, never()).deleteAll(anyList());
+        verify(pagamentoRepository, never()).deleteAll(anyList());
     }
 }

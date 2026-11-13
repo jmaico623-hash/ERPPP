@@ -35,6 +35,9 @@ public class Fiado {
     @Column(nullable = false)
     private boolean pago = false;
 
+    @Column(nullable = false)
+    private boolean cancelado = false;
+
     private LocalDateTime dataPagamento;
 
     @Column(nullable = false, updatable = false)
@@ -61,6 +64,9 @@ public class Fiado {
 
     public boolean isPago() { return pago; }
     public void setPago(boolean pago) { this.pago = pago; }
+
+    public boolean isCancelado() { return cancelado; }
+    public void setCancelado(boolean cancelado) { this.cancelado = cancelado; }
 
     public LocalDateTime getDataPagamento() { return dataPagamento; }
     public void setDataPagamento(LocalDateTime dataPagamento) { this.dataPagamento = dataPagamento; }

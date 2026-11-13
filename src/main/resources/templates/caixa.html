@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caixa - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .logo { font-size: 20px; font-weight: 600; }
+        .navbar .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .navbar a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        .full { grid-column: 1 / -1; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        h1 { font-size: 26px; color: #333; margin-bottom: 6px; }
+        h2 { font-size: 18px; color: #333; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .muted { color: #666; font-size: 14px; }
+        .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; }
+        .alert-ok { background: #e8f5e9; color: #1b5e20; }
+        .alert-err { background: #ffebee; color: #b71c1c; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        label { font-size: 13px; color: #444; font-weight: 500; }
+        input, textarea, select { padding: 10px 12px; border: 1px solid #d7d7d7; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        button, .btn { background: #27ae60; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+        .btn-ghost { background: #f3f4f6; color: #333; border: 1px solid #e5e7eb; }
+        .btn-warn { background: #e67e22; }
+        .btn-danger { background: #c0392b; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        th { background: #fafafa; color: #555; font-size: 13px; }
+        .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; }
+        .pill-open { background: #e8f5e9; color: #1b5e20; }
+        .pill-closed { background: #f3f4f6; color: #555; }
+        .kpi { display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid #f0f0f0; border-radius: 10px; }
+        .kpi .label { font-size: 12px; color: #666; }
+        .kpi .value { font-size: 20px; font-weight: 700; }
+        .kpi.strong .value { font-size: 24px; color: #1f7a4d; }
+        @media (max-width: 980px) { .container { grid-template-columns: 1fr; } }
+    </style>
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><i class="fas fa-cash-register"></i> NanoBanana ERP — Caixa</div>
+        <div class="user-info">
+            <span th:text="${usuario.nome}">Usuário</span>
+            <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/pdv"><i class="fas fa-shopping-cart"></i> PDV</a>
+            <a href="/pdv/historico"><i class="fas fa-history"></i> Histórico</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="full">
+            <h1>Caixa</h1>
+            <p class="muted">Abertura, movimentos (sangria/reforço), fecho e conferência por turno.</p>
+            <div th:if="${sucesso}" class="alert alert-ok" th:text="${sucesso}"></div>
+            <div th:if="${erro}" class="alert alert-err" th:text="${erro}"></div>
+        </div>
+
+        <!-- Caixa aberto -->
+        <div class="card" th:if="${caixaAberto != null}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+                <div>
+                    <h2><i class="fas fa-door-open" style="color:#27ae60;"></i> Caixa aberto</h2>
+                    <p class="muted">Abertura: <span th:text="${#temporals.format(caixaAberto.dataAbertura, 'dd/MM/yyyy HH:mm')}"></span> | Fundo: <strong th:text="${#numbers.formatDecimal(caixaAberto.valorAbertura, 1, 'COMMA', 2, 'POINT')} + ' MZN'"></strong></p>
+                </div>
+                <span class="pill pill-open"><i class="fas fa-circle"></i> ABERTO</span>
+            </div>
+
+            <div class="grid-3" th:if="${resumo != null}">
+                <div class="kpi"><span class="label">Vendas em dinheiro (caixa)</span><span class="value" th:text="${#numbers.formatDecimal(resumo.vendasCash, 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</span></div>
+                <div class="kpi"><span class="label">M-Pesa / e-Mola / Cartão</span><span class="value" th:text="${#numbers.formatDecimal(resumo.vendasMpesa.add(resumo.vendasEmola).add(resumo.vendasCartao), 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</span></div>
+                <div class="kpi"><span class="label">Fiado (não entra no caixa)</span><span class="value" th:text="${#numbers.formatDecimal(resumo.vendasFiado, 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</span></div>
+                <div class="kpi"><span class="label">Total vendas no período</span><span class="value" th:text="${#numbers.formatDecimal(resumo.totalVendas, 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</span></div>
+                <div class="kpi"><span class="label">Reforços (+)</span><span class="value" th:text="${#numbers.formatDecimal(resumo.reforcos, 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</span></div>
+                <div class="kpi"><span class="label">Sangrias (-)</span><span class="value" th:text="${#numbers.formatDecimal(resumo.sangrias, 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</span></div>
+                <div class="kpi strong" style="grid-column: 1 / -1;"><span class="label">ESPERADO EM CAIXA (Fundo + Dinheiro + Reforços - Sangrias)</span><span class="value" th:text="${#numbers.formatDecimal(resumo.esperadoEmCaixa, 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</span></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;">
+                <div>
+                    <h2><i class="fas fa-plus-circle" style="color:#e67e22;"></i> Movimentos</h2>
+                    <form method="post" action="/caixa/movimento" class="grid-2" style="align-items:end;">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                        <div class="form-row">
+                            <label>Tipo</label>
+                            <select name="tipo" required>
+                                <option value="REFORCO">Reforço (entrar dinheiro)</option>
+                                <option value="SANGRIA">Sangria (retirar dinheiro)</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>Valor (MZN)</label>
+                            <input type="number" step="0.01" min="0.01" name="valor" required>
+                        </div>
+                        <div class="form-row" style="grid-column:1/-1;">
+                            <label>Motivo</label>
+                            <input type="text" name="motivo" placeholder="Ex: Troco, pagamento fornecedor..." maxlength="255">
+                        </div>
+                        <button style="grid-column:1/-1;"><i class="fas fa-save"></i> Registar movimento</button>
+                    </form>
+                    <div style="margin-top:14px;">
+                        <table>
+                            <thead><tr><th>Hora</th><th>Tipo</th><th>Valor</th><th>Motivo</th></tr></thead>
+                            <tbody>
+                                <tr th:each="m : ${movimentos}">
+                                    <td th:text="${#temporals.format(m.dataHora, 'HH:mm')}">-</td>
+                                    <td th:text="${m.tipo}">-</td>
+                                    <td th:text="${#numbers.formatDecimal(m.valor, 1, 'COMMA', 2, 'POINT')} + ' MZN'">-</td>
+                                    <td th:text="${m.motivo}">-</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(movimentos)}"><td colspan="4" class="muted" style="text-align:center;">Sem movimentos</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h2><i class="fas fa-lock" style="color:#c0392b;"></i> Fechar caixa</h2>
+                    <p class="muted" style="margin-bottom:12px;">Conte o dinheiro efetivamente no caixa e informe o valor. O sistema calcula a diferença face ao esperado.</p>
+                    <form method="post" action="/caixa/fechar">
+                        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                        <div class="form-row">
+                            <label>Valor contado/informado (MZN)</label>
+                            <input type="number" step="0.01" min="0" name="valorInformado" required>
+                        </div>
+                        <div class="form-row">
+                            <label>Observação do fecho</label>
+                            <textarea name="observacao" rows="3" placeholder="Notas, acertos, etc."></textarea>
+                        </div>
+                        <button class="btn-danger"><i class="fas fa-file-invoice-dollar"></i> Fechar caixa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abrir caixa -->
+        <div class="card" th:if="${caixaAberto == null}">
+            <h2><i class="fas fa-cash-register" style="color:#27ae60;"></i> Abrir caixa</h2>
+            <p class="muted" style="margin-bottom:16px;">Para iniciar as vendas em dinheiro com controlo correto, abra o caixa com o fundo de troco.</p>
+            <form method="post" action="/caixa/abrir" class="grid-2">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <div class="form-row">
+                    <label>Valor de abertura / Fundo de troco (MZN)</label>
+                    <input type="number" step="0.01" min="0" name="valorAbertura" required placeholder="Ex: 500.00">
+                </div>
+                <div class="form-row">
+                    <label>Observação</label>
+                    <input type="text" name="observacao" placeholder="Opcional">
+                </div>
+                <button style="grid-column:1/-1;"><i class="fas fa-unlock"></i> Abrir caixa</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-history"></i> Últimos fechamentos</h2>
+            <table>
+                <thead><tr><th>Abertura</th><th>Fecho</th><th>Fundo</th><th>Esperado</th><th>Informado</th><th>Diferença</th><th>Estado</th></tr></thead>
+                <tbody>
+                    <tr th:each="c : ${historico}">
+                        <td th:text="${#temporals.format(c.dataAbertura, 'dd/MM/yyyy HH:mm')}">-</td>
+                        <td th:text="${c.dataFecho != null ? #temporals.format(c.dataFecho, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                        <td th:text="${#numbers.formatDecimal(c.valorAbertura, 1, 'COMMA', 2, 'POINT')}">-</td>
+                        <td th:text="${c.valorEsperado != null ? #numbers.formatDecimal(c.valorEsperado, 1, 'COMMA', 2, 'POINT') : '-'}">-</td>
+                        <td th:text="${c.valorFechoInformado != null ? #numbers.formatDecimal(c.valorFechoInformado, 1, 'COMMA', 2, 'POINT') : '-'}">-</td>
+                        <td th:text="${c.diferenca != null ? #numbers.formatDecimal(c.diferenca, 1, 'COMMA', 2, 'POINT') : '-'}">-</td>
+                        <td><span class="pill" th:classappend="${c.status.name() == 'ABERTO'} ? 'pill-open' : 'pill-closed'" th:text="${c.status}">-</span></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(historico)}"><td colspan="7" class="muted" style="text-align:center;">Sem histórico</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

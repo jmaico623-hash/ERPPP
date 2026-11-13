@@ -63,10 +63,14 @@ public class ApiController {
         if (usuario == null) return ResponseEntity.status(401).build();
 
         List<Venda> vendas = usuario.getRole() == Usuario.Role.VENDEDOR
-                ? vendaRepository.findByTenantIdAndVendedorId(usuario.getTenantId(), usuario.getId())
-                : vendaRepository.findByTenantIdOrderByDataHoraDesc(usuario.getTenantId());
+                ? vendaRepository.findByTenantIdAndVendedorIdAndStatusOrderByDataHoraDesc(
+                        usuario.getTenantId(), usuario.getId(), Venda.Status.CONCLUIDA,
+                        org.springframework.data.domain.PageRequest.of(0, 50)).getContent()
+                : vendaRepository.findByTenantIdAndStatusOrderByDataHoraDesc(
+                        usuario.getTenantId(), Venda.Status.CONCLUIDA,
+                        org.springframework.data.domain.PageRequest.of(0, 50)).getContent();
 
-        List<VendaDto> dtos = vendas.stream().limit(50)
+        List<VendaDto> dtos = vendas.stream()
                 .map(v -> new VendaDto(v.getId(), v.getDataHora(), v.getStatus().name(),
                         v.getMetodoPagamento() != null ? v.getMetodoPagamento().name() : null,
                         v.getTotal()))
@@ -79,6 +83,10 @@ public class ApiController {
     public ResponseEntity<ResumoDto> resumo() {
         Usuario usuario = usuario();
         if (usuario == null) return ResponseEntity.status(401).build();
+
+        if (!usuario.podeVerRelatorios()) {
+            return ResponseEntity.status(403).build();
+        }
 
         UUID tenantId = usuario.getTenantId();
         LocalDateTime inicio = LocalDate.now().atStartOfDay();

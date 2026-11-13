@@ -64,3 +64,7 @@ erp.pid
 erp-watchdog.log
 erp-server.log
 data/
+
+# Artefatos locais
+BOOT-INF/
+cookies.txt

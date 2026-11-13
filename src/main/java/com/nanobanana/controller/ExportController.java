@@ -128,7 +128,7 @@ public class ExportController {
             return;
         }
 
-        List<Fiado> fiados = fiadoRepository.findByTenantIdOrderByDataCriacaoDesc(usuario.getTenantId());
+        List<Fiado> fiados = fiadoRepository.findByTenantIdAndCanceladoFalseOrderByDataCriacaoDesc(usuario.getTenantId());
 
         prepararResposta(response, "fiados.csv");
         PrintWriter out = response.getWriter();
@@ -171,6 +171,10 @@ public class ExportController {
     private String escapar(String valor) {
         if (valor == null) return "";
         String limpo = valor.replace("\r", " ").replace("\n", " ");
+        // Neutraliza fórmulas abertas pelo Excel/LibreOffice
+        if (limpo.startsWith("=") || limpo.startsWith("+") || limpo.startsWith("-") || limpo.startsWith("@")) {
+            limpo = "'" + limpo;
+        }
         if (limpo.contains(";") || limpo.contains("\"")) {
             limpo = "\"" + limpo.replace("\"", "\"\"") + "\"";
         }

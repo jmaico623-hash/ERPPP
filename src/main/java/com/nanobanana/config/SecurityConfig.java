@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -31,11 +32,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // CSRF habilitado. Apenas o login/registro manual do AuthController é isento
-        // (o formulário envia o token via Thymeleaf quando disponível).
+        // CSRF habilitado em todas as rotas. Os formulários Thymeleaf enviam o token.
         http.csrf(csrf -> csrf
                 .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler())
-                .ignoringRequestMatchers("/login", "/registrar")
         );
 
         // Permite o H2 Console em dev (mesma origem)
@@ -50,20 +49,24 @@ public class SecurityConfig {
                 // Painel do super admin: protegido pelo AdminAuthInterceptor (sessão própria)
                 .requestMatchers("/admin/**").permitAll()
                 // Rotas autenticadas de tenant
-                .requestMatchers("/assinatura", "/dashboard", "/pdv/**", "/historico", "/vendas",
-                        "/fiados", "/estoque", "/alertas", "/relatorio", "/api/**").authenticated()
+                .requestMatchers("/assinatura", "/dashboard", "/pdv/**", "/pdv/historico",
+                        "/fiados", "/stock/**", "/alertas", "/relatorio", "/api/**").authenticated()
                 // Qualquer outra exige autenticação
                 .anyRequest().authenticated()
-        )
+        );
+        // Usuário não autenticado volta para o login em vez de servir 403
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")));
+
         // O login é feito manualmente pelo AuthController (sessão + Spring Security)
-        .logout(logout -> logout
+        http.logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .permitAll()
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
-        )
-        .sessionManagement(session -> session
+        );
+        http.sessionManagement(session -> session
                 .maximumSessions(1)
                 .expiredUrl("/login?expired=true")
         );
@@ -78,15 +81,25 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return email -> usuarioRepository.findByEmail(email)
-                .map(usuario -> org.springframework.security.core.userdetails.User.builder()
-                        .username(usuario.getEmail())
-                        .password(usuario.getSenha())
-                        .roles(usuario.getRole().name())
-                        .disabled(!usuario.isAtivo())
-                        .accountLocked(usuario.isBloqueado())
-                        .build())
-                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
-                        "Usuário não encontrado: " + email));
+        return identificador -> {
+            String id = identificador == null ? "" : identificador.trim();
+            if (id.isEmpty()) {
+                throw new org.springframework.security.core.userdetails.UsernameNotFoundException("Usuário não encontrado");
+            }
+            var usuarioOpt = id.contains("@")
+                    ? usuarioRepository.findByEmailIgnoreCase(id)
+                    : usuarioRepository.findFirstByTelefoneInOrderByCriadoEmAsc(
+                            com.nanobanana.util.TelefoneUtil.variantes(id));
+            return usuarioOpt
+                    .map(usuario -> org.springframework.security.core.userdetails.User.builder()
+                            .username(usuario.getEmail() != null && !usuario.getEmail().isBlank() ? usuario.getEmail() : (usuario.getTelefone() != null ? usuario.getTelefone() : id))
+                            .password(usuario.getSenha())
+                            .roles(usuario.getRole().name())
+                            .disabled(!usuario.isAtivo())
+                            .accountLocked(usuario.isBloqueado())
+                            .build())
+                    .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
+                            "Usuário não encontrado: " + id));
+        };
     }
 }

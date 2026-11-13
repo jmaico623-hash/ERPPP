@@ -24,7 +24,7 @@ public class Usuario {
     @Column(nullable = false, length = 255)
     private String nome;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String email;
 
     @Column(nullable = false, length = 255)

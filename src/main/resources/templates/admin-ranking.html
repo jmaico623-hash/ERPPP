@@ -28,6 +28,8 @@
             </ul>
         </aside>
         <main class="content admin-content" style="width:100%;">
+            <div th:replace="~{admin-flash :: flash}"></div>
+
             <h1>🏆 Ranking de Lojas — Este Mês</h1>
             <table class="nano-table">
                 <thead><tr><th>#</th><th>Loja</th><th>Responsável</th><th>Vendas (Mês)</th><th>Qtd Vendas</th><th>Fiado Pendente</th></tr></thead>

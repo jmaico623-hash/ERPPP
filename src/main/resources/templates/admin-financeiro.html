@@ -28,6 +28,8 @@
             </ul>
         </aside>
         <main class="content admin-content" style="width:100%;">
+            <div th:replace="~{admin-flash :: flash}"></div>
+
             <h1>📈 Relatório Financeiro</h1>
             <div class="stats-grid">
                 <div class="stat-card"><h3><i class="fas fa-coins"></i> Receita 12 Meses</h3><p class="stat-value" th:text="${#numbers.formatDecimal(receitaTotal, 1, 2)} + ' MZN'">0</p></div>

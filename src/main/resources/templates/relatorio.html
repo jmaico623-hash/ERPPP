@@ -23,10 +23,12 @@
         <aside class="sidebar">
             <ul>
                 <li><a href="/dashboard"><i class="fas fa-home"></i> Painel</a></li>
-                <li><a href="/vendas"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
-                <li><a href="/vendas/historico"><i class="fas fa-history"></i> Histórico</a></li>
-                <li class="active"><a href="/vendas/relatorio"><i class="fas fa-chart-bar"></i> Relatório</a></li>
+                <li><a href="/pdv"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
+                <li><a href="/pdv/historico"><i class="fas fa-history"></i> Histórico</a></li>
+                <li class="active"><a href="/relatorio"><i class="fas fa-chart-bar"></i> Relatório</a></li>
                 <li><a href="/fiados"><i class="fas fa-book-open"></i> Fiado</a></li>
+                <li><a href="/despesas"><i class="fas fa-money-bill-wave"></i> Despesas</a></li>
+                <li><a href="/caixa"><i class="fas fa-cash-register"></i> Caixa</a></li>
                 <li><a href="/inventario"><i class="fas fa-boxes"></i> Inventário</a></li>
                 <li><a href="/estagnados"><i class="fas fa-hourglass-end"></i> Estagnados</a></li>
                 <li><a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a></li>
@@ -37,9 +39,9 @@
 
             <!-- Filtro por Período -->
             <div class="periodo-filtro">
-                <a th:href="@{/vendas/relatorio(periodo='hoje')}" th:class="${periodo == 'hoje' || periodo == null ? 'btn-periodo active' : 'btn-periodo'}">📅 Hoje</a>
-                <a th:href="@{/vendas/relatorio(periodo='semana')}" th:class="${periodo == 'semana' ? 'btn-periodo active' : 'btn-periodo'}">📆 Esta Semana</a>
-                <a th:href="@{/vendas/relatorio(periodo='mes')}" th:class="${periodo == 'mes' ? 'btn-periodo active' : 'btn-periodo'}">🗓️ Este Mês</a>
+                <a th:href="@{/relatorio(periodo='hoje')}" th:class="${periodo == 'hoje' || periodo == null ? 'btn-periodo active' : 'btn-periodo'}">📅 Hoje</a>
+                <a th:href="@{/relatorio(periodo='semana')}" th:class="${periodo == 'semana' ? 'btn-periodo active' : 'btn-periodo'}">📆 Esta Semana</a>
+                <a th:href="@{/relatorio(periodo='mes')}" th:class="${periodo == 'mes' ? 'btn-periodo active' : 'btn-periodo'}">🗓️ Este Mês</a>
             </div>
 
             <h2 th:text="${periodoLabel}"></h2>
@@ -47,22 +49,44 @@
             <!-- Cards de Resumo -->
             <div class="stats-grid relatorio-stats">
                 <div class="stat-card">
-                    <h3>💰 Total Vendas</h3>
+                    <h3>💰 Vendas (Bruto)</h3>
                     <p class="stat-value" th:text="${#numbers.formatDecimal(totalVendas, 1, 2)} + ' MZN'">0 MZN</p>
+                    <small style="color:#666;">Nº vendas: <span th:text="${totalVendasCount}">0</span> | Média: <span th:text="${#numbers.formatDecimal(mediaVenda, 1, 2)} + ' MZN'">0</span></small>
                 </div>
-                <div class="stat-card">
-                    <h3>📝 Nº de Vendas</h3>
-                    <p class="stat-value" th:text="${totalVendasCount}">0</p>
+                <div class="stat-card" style="border-left:4px solid #e74c3c;">
+                    <h3>↩️ Devoluções</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalDevolucoes, 1, 2)} + ' MZN'">0 MZN</p>
                 </div>
-                <div class="stat-card">
-                    <h3>📊 Média por Venda</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(mediaVenda, 1, 2)} + ' MZN'">0 MZN</p>
+                <div class="stat-card" style="border-left:4px solid #2980b9;">
+                    <h3>📥 Vendas Líquidas</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(vendasLiquidas, 1, 2)} + ' MZN'">0 MZN</p>
+                    <small style="color:#666;">Vendas − Devoluções</small>
+                </div>
+                <div class="stat-card" style="border-left:4px solid #8e44ad;">
+                    <h3>📦 Custo Mercadoria Vendida (CMV)</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(custoMercadoriaVendida, 1, 2)} + ' MZN'">0 MZN</p>
+                    <small style="color:#666;">Custo dos itens vendidos (ajustado por devoluções)</small>
+                </div>
+                <div class="stat-card" style="border-left:4px solid #16a085;">
+                    <h3>📊 Lucro Bruto</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(lucroBruto, 1, 2)} + ' MZN'">0 MZN</p>
+                    <small style="color:#666;">Vendas Líquidas − CMV</small>
+                </div>
+                <div class="stat-card" style="border-left:4px solid #e67e22;">
+                    <h3>💸 Despesas</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalDespesas, 1, 2)} + ' MZN'">0 MZN</p>
+                </div>
+                <div class="stat-card" style="border-left:4px solid #27ae60;">
+                    <h3>📈 Lucro Líquido</h3>
+                    <p class="stat-value" th:text="${#numbers.formatDecimal(lucroLiquido, 1, 2)} + ' MZN'">0 MZN</p>
+                    <small style="color:#666;">Lucro Bruto − Despesas</small>
                 </div>
                 <div class="stat-card">
                     <h3>📖 Vendas Fiado</h3>
                     <p class="stat-value" th:text="${vendasFiado}">0</p>
                 </div>
             </div>
+            <p class="muted" style="margin: -10px 0 20px; color:#666; font-size:13px;">Nota: o CMV usa o preço de custo registado no momento da venda. Vendas antigas sem custo registado entram como custo 0; mantenha o preço de custo dos produtos atualizado para maior precisão.</p>
 
             <!-- Formas de Pagamento -->
             <div class="relatorio-secao">

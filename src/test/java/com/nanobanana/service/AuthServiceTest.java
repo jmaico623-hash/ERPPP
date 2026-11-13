@@ -1,6 +1,7 @@
 package com.nanobanana.service;
 
 import com.nanobanana.model.Usuario;
+import com.nanobanana.model.Tenant;
 import com.nanobanana.repository.UsuarioRepository;
 import com.nanobanana.repository.TenantRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,12 +64,22 @@ class AuthServiceTest {
         usuario.setBloqueado(false);
         usuario.setTentativasFalhas(0);
 
+        Tenant tenant = new Tenant();
+        tenant.setId(usuario.getTenantId());
+        tenant.setNome("Loja Teste");
+        tenant.setEmail("loja@email.com");
+        tenant.setAtivo(true);
+        when(tenantRepository.findById(usuario.getTenantId())).thenReturn(Optional.of(tenant));
+
         // Mock do RequestContextHolder para sessão
         ServletRequestAttributes attrs = new ServletRequestAttributes(request);
         when(request.getSession(false)).thenReturn(session);
         RequestContextHolder.setRequestAttributes(attrs);
 
-        // Mock do novo método com lock
+        // Mock dos métodos com lock (email ou telefone)
+        when(usuarioRepository.findByIdentificadorWithLock("teste@email.com")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findByIdentificadorWithLock("naoexiste@email.com")).thenReturn(Optional.empty());
+        // Compatibilidade
         when(usuarioRepository.findByEmailWithLock("teste@email.com")).thenReturn(Optional.of(usuario));
         when(usuarioRepository.findByEmailWithLock("naoexiste@email.com")).thenReturn(Optional.empty());
     }
@@ -130,5 +141,27 @@ class AuthServiceTest {
         Optional<Usuario> resultado = authService.login("naoexiste@email.com", "senha", session);
 
         assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    void loginComTelefoneFormatadoDeveEncontrarUsuario() {
+        usuario.setTelefone("845550001");
+        when(passwordEncoder.matches("senha123", usuario.getSenha())).thenReturn(true);
+        when(usuarioRepository.findFirstByTelefoneIn(any())).thenReturn(Optional.of(usuario));
+
+        Optional<Usuario> resultado = authService.login("+258 84 555 0001", "senha123", session);
+
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get()).isSameAs(usuario);
+    }
+
+    @Test
+    void loginComEmailEmMaiusculasDeveFuncionar() {
+        when(passwordEncoder.matches("senha123", usuario.getSenha())).thenReturn(true);
+
+        Optional<Usuario> resultado = authService.login("TESTE@EMAIL.COM", "senha123", session);
+
+        assertThat(resultado).isPresent();
+        verify(usuarioRepository).findByIdentificadorWithLock("teste@email.com");
     }
 }

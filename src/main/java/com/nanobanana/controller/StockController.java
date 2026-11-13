@@ -41,6 +41,68 @@ public class StockController {
     @Autowired
     private AuditoriaLogRepository auditoriaLogRepository;
 
+    @Autowired
+    private FornecedorRepository fornecedorRepository;
+
+    /**
+     * STOCK RÁPIDO - APENAS DONO
+     */
+    @GetMapping("/rapido")
+    public String stockRapido(Model model) {
+        var usuarioOpt = authService.getUsuarioLogado();
+        if (usuarioOpt.isEmpty()) return "redirect:/login";
+
+        Usuario usuario = usuarioOpt.get();
+        if (usuario.getRole() != Usuario.Role.DONO) {
+            return "redirect:/pdv";
+        }
+
+        UUID tenantId = authService.getTenantIdLogado();
+        List<ProdutoRapido> produtos = produtoRepository.findByTenantIdOrderByNome(tenantId)
+                .stream()
+                .map(p -> new ProdutoRapido(p.getId(), p.getNome(), p.getStockAtual()))
+                .sorted(Comparator.comparingInt(ProdutoRapido::getStock))
+                .toList();
+
+        model.addAttribute("usuario", usuario);
+        model.addAttribute("produtos", produtos);
+        return "stock-rapido";
+    }
+
+    /**
+     * Ajuste rápido de stock pelo DONO
+     */
+    @PostMapping("/ajustar")
+    public String ajustarStock(@RequestParam UUID produtoId,
+                               @RequestParam int qtd,
+                               RedirectAttributes redirectAttrs) {
+        var usuarioOpt = authService.getUsuarioLogado();
+        if (usuarioOpt.isEmpty()) return "redirect:/login";
+
+        Usuario usuario = usuarioOpt.get();
+        if (usuario.getRole() != Usuario.Role.DONO) {
+            redirectAttrs.addFlashAttribute("erro", "APENAS o dono pode ajustar stock.");
+            return "redirect:/pdv";
+        }
+
+        UUID tenantId = authService.getTenantIdLogado();
+        try {
+            if (qtd > 0) {
+                stockService.adicionarStock(tenantId, produtoId, qtd, usuario.getId(),
+                        null, null, null, "Ajuste rápido +" + qtd);
+            } else if (qtd < 0) {
+                stockService.baixarStock(tenantId, produtoId, -qtd, usuario.getId(),
+                        BaixaStock.TipoBaixa.AJUSTE, "Ajuste rápido " + qtd);
+            } else {
+                throw new RuntimeException("Ajuste não pode ser zero");
+            }
+            redirectAttrs.addFlashAttribute("sucesso", "Stock ajustado com sucesso!");
+        } catch (RuntimeException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage());
+        }
+        return "redirect:/stock/rapido";
+    }
+
     /**
      * GESTÃO DE STOCK - APENAS DONO
      */
@@ -69,6 +131,7 @@ public class StockController {
         model.addAttribute("entradas", entradas);
         model.addAttribute("baixas", baixas);
         model.addAttribute("produtosStockBaixo", stockService.getProdutosStockBaixo(tenantId));
+        model.addAttribute("fornecedores", fornecedorRepository.findByTenantIdAndAtivoTrueOrderByNomeAsc(tenantId));
         
         return "stock-gestao";
     }
@@ -167,6 +230,20 @@ public class StockController {
             return "redirect:/pdv";
         }
 
+        if (stockInicial < 0) {
+            redirectAttrs.addFlashAttribute("erro", "Stock inicial não pode ser negativo.");
+            return "redirect:/stock/gestao";
+        }
+        if (stockMinimo < 0) {
+            redirectAttrs.addFlashAttribute("erro", "Stock mínimo não pode ser negativo.");
+            return "redirect:/stock/gestao";
+        }
+        if (precoVenda == null || precoVenda.compareTo(BigDecimal.ZERO) <= 0
+                || (precoCusto != null && precoCusto.compareTo(BigDecimal.ZERO) < 0)) {
+            redirectAttrs.addFlashAttribute("erro", "O preço de venda deve ser maior que zero e outros preços não podem ser negativos.");
+            return "redirect:/stock/gestao";
+        }
+
         UUID tenantId = authService.getTenantIdLogado();
 
         Produto produto = new Produto();
@@ -177,7 +254,7 @@ public class StockController {
         produto.setPrecoCusto(precoCusto);
         produto.setPrecoVenda(precoVenda);
         produto.setStockMinimo(stockMinimo);
-        produto.setStockAtual(stockInicial);
+        produto.setStockAtual(0);
         produtoRepository.save(produto);
 
         // Se tem stock inicial, registra entrada
@@ -211,6 +288,12 @@ public class StockController {
             return "redirect:/pdv";
         }
 
+        if (precoVenda == null || precoVenda.compareTo(BigDecimal.ZERO) <= 0
+                || (precoCusto != null && precoCusto.compareTo(BigDecimal.ZERO) < 0)) {
+            redirectAttrs.addFlashAttribute("erro", "O preço de venda deve ser maior que zero e outros preços não podem ser negativos.");
+            return "redirect:/stock/gestao";
+        }
+
         Produto produto = produtoRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
@@ -223,5 +306,21 @@ public class StockController {
 
         redirectAttrs.addFlashAttribute("sucesso", "Preço atualizado!");
         return "redirect:/stock/gestao";
+    }
+
+    public static class ProdutoRapido {
+        private final UUID id;
+        private final String nome;
+        private final int stock;
+
+        public ProdutoRapido(UUID id, String nome, int stock) {
+            this.id = id;
+            this.nome = nome;
+            this.stock = stock;
+        }
+
+        public UUID getId() { return id; }
+        public String getNome() { return nome; }
+        public int getStock() { return stock; }
     }
 }

@@ -26,7 +26,7 @@ public interface ProdutoRepository extends JpaRepository<Produto, UUID> {
     @Query("SELECT p FROM Produto p WHERE p.tenantId = :tenantId AND p.stockAtual = 0")
     List<Produto> findProdutosSemStock(@Param("tenantId") UUID tenantId);
     
-    @Query("SELECT SUM(p.stockAtual * p.precoVenda) FROM Produto p WHERE p.tenantId = :tenantId")
+    @Query("SELECT SUM(p.stockAtual * COALESCE(p.precoCusto, p.precoVenda)) FROM Produto p WHERE p.tenantId = :tenantId")
     java.math.BigDecimal valorTotalStock(@Param("tenantId") UUID tenantId);
 
     /**

@@ -16,7 +16,8 @@
         .stock-count { font-size: 1.8rem; font-weight: 800; margin: 8px 0; }
         .stock-count.zero { color: #E74C3C; }
         .stock-count.ok { color: #2ECC71; }
-        .stock-controls { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; }
+        .stock-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+        .adjust-form { display: flex; align-items: center; gap: 8px; margin: 0; }
         .stock-btn { width: 40px; height: 40px; border: none; border-radius: 50%; font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
         .stock-btn.minus { background: #FDEDEC; color: #E74C3C; }
         .stock-btn.minus:hover { background: #E74C3C; color: white; }
@@ -40,9 +41,9 @@
         <aside class="sidebar">
             <ul>
                 <li><a href="/dashboard"><i class="fas fa-home"></i> Painel</a></li>
-                <li><a href="/vendas"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
+                <li><a href="/pdv"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
                 <li><a href="/fiados"><i class="fas fa-book-open"></i> Fiado</a></li>
-                <li class="active"><a href="/stock"><i class="fas fa-boxes"></i> Stock Rápido</a></li>
+                <li class="active"><a href="/stock/rapido"><i class="fas fa-boxes"></i> Stock Rápido</a></li>
                 <li><a href="/inventario"><i class="fas fa-clipboard-list"></i> Inventário</a></li>
                 <li><a href="/estagnados"><i class="fas fa-hourglass-end"></i> Estagnados</a></li>
                 <li><a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a></li>
@@ -59,13 +60,19 @@
                     <div class="stock-icon" th:if="${p.stock > 5}">✅</div>
                     <div class="stock-name" th:text="${p.nome}"></div>
                     <div class="stock-count" th:classappend="${p.stock == 0} ? ' zero' : ' ok'" th:text="${p.stock}"></div>
-                    <form th:action="@{/stock/ajustar}" method="post" class="stock-controls">
-                        <input type="hidden" name="produtoId" th:value="${p.id}">
-                        <button type="submit" class="stock-btn minus" name="qtd" value="-5">-5</button>
-                        <button type="submit" class="stock-btn minus" name="qtd" value="-1">-1</button>
-                        <input type="number" name="qtd" value="10" min="1" class="stock-qtd-input">
-                        <button type="submit" class="stock-btn plus">+ Adicionar</button>
-                    </form>
+
+                    <div class="stock-controls">
+                        <form th:action="@{/stock/ajustar}" method="post" class="adjust-form">
+                            <input type="hidden" name="produtoId" th:value="${p.id}">
+                            <button type="submit" class="stock-btn minus" name="qtd" value="-5">-5</button>
+                            <button type="submit" class="stock-btn minus" name="qtd" value="-1">-1</button>
+                        </form>
+                        <form th:action="@{/stock/ajustar}" method="post" class="adjust-form adjust-custom">
+                            <input type="hidden" name="produtoId" th:value="${p.id}">
+                            <input type="number" name="qtd" value="10" min="1" class="stock-qtd-input" aria-label="Quantidade a adicionar">
+                            <button type="submit" class="stock-btn plus">+</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </main>

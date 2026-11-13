@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Despesas - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .logo { font-size: 20px; font-weight: 600; }
+        .navbar .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .navbar a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        h1 { font-size: 26px; color: #333; margin-bottom: 6px; }
+        h2 { font-size: 18px; color: #333; margin-bottom: 12px; }
+        .muted { color: #666; font-size: 14px; }
+        .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; }
+        .alert-ok { background: #e8f5e9; color: #1b5e20; }
+        .alert-err { background: #ffebee; color: #b71c1c; }
+        .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        label { font-size: 13px; color: #444; font-weight: 500; }
+        input, textarea, select { padding: 10px 12px; border: 1px solid #d7d7d7; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        button { background: #c0392b; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        th { background: #fafafa; color: #555; font-size: 13px; }
+        .kpi { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+        .kpi .label { font-size: 12px; color: #9a3412; }
+        .kpi .value { font-size: 22px; font-weight: 700; color: #c2410c; }
+        @media (max-width: 980px) { .container { grid-template-columns: 1fr; } }
+    </style>
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><i class="fas fa-money-bill-wave"></i> NanoBanana ERP — Despesas</div>
+        <div class="user-info">
+            <span th:text="${usuario.nome}">Usuário</span>
+            <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/relatorio"><i class="fas fa-chart-bar"></i> Relatório</a>
+            <a href="/caixa"><i class="fas fa-cash-register"></i> Caixa</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2><i class="fas fa-plus-circle"></i> Registar despesa</h2>
+            <div class="kpi">
+                <div class="label">Total de despesas (mês atual)</div>
+                <div class="value" th:text="${#numbers.formatDecimal(totalMes != null ? totalMes : 0, 1, 'COMMA', 2, 'POINT')} + ' MZN'">0,00 MZN</div>
+            </div>
+
+            <div th:if="${sucesso}" class="alert alert-ok" th:text="${sucesso}"></div>
+            <div th:if="${erro}" class="alert alert-err" th:text="${erro}"></div>
+
+            <form method="post" action="/despesas">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <div class="form-row">
+                    <label>Descrição</label>
+                    <input type="text" name="descricao" required maxlength="255" placeholder="Ex: Renda da loja, Energia EDM...">
+                </div>
+                <div class="form-row">
+                    <label>Categoria</label>
+                    <select name="categoria" required>
+                        <option th:each="c : ${categorias}" th:value="${c.name()}" th:text="${c.name()}">OUTROS</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Valor (MZN)</label>
+                    <input type="number" step="0.01" min="0.01" name="valor" required>
+                </div>
+                <div class="form-row">
+                    <label>Data</label>
+                    <input type="date" name="dataDespesa" th:value="${hoje}">
+                </div>
+                <div class="form-row">
+                    <label>Método de pagamento</label>
+                    <select name="metodoPagamento">
+                        <option value="">—</option>
+                        <option value="CASH">Dinheiro</option>
+                        <option value="MPESA">M-Pesa</option>
+                        <option value="EMOLA">e-Mola</option>
+                        <option value="TRANSFERENCIA">Transferência</option>
+                        <option value="CARTAO">Cartão</option>
+                        <option value="OUTRO">Outro</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Observação</label>
+                    <textarea name="observacao" rows="2"></textarea>
+                </div>
+                <button type="submit"><i class="fas fa-save"></i> Registar despesa</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-list"></i> Despesas recentes</h2>
+            <table>
+                <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Método</th><th>Valor</th></tr></thead>
+                <tbody>
+                    <tr th:each="d : ${despesas}">
+                        <td th:text="${#temporals.format(d.dataDespesa, 'dd/MM/yyyy')}">-</td>
+                        <td th:text="${d.descricao}">-</td>
+                        <td th:text="${d.categoria}">-</td>
+                        <td th:text="${d.metodoPagamento}">-</td>
+                        <td th:text="${#numbers.formatDecimal(d.valor, 1, 'COMMA', 2, 'POINT')} + ' MZN'">-</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(despesas)}"><td colspan="5" class="muted" style="text-align:center;">Sem despesas registadas</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

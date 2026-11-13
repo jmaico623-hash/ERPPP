@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devolução - NanoBanana ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar .logo { font-size: 20px; font-weight: 600; }
+        .navbar .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .navbar a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h1 { font-size: 26px; color: #333; margin-bottom: 6px; }
+        h2 { font-size: 18px; color: #333; margin-bottom: 12px; }
+        .muted { color: #666; font-size: 14px; }
+        .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; }
+        .alert-ok { background: #e8f5e9; color: #1b5e20; }
+        .alert-err { background: #ffebee; color: #b71c1c; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: middle; }
+        th { background: #fafafa; color: #555; font-size: 13px; }
+        input[type=number], textarea { width: 100%; padding: 8px 10px; border: 1px solid #d7d7d7; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        label { font-size: 13px; color: #444; font-weight: 500; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; text-decoration: none; }
+        .btn-primary { background: #c0392b; color: #fff; }
+        .btn-ghost { background: #f3f4f6; color: #333; border: 1px solid #e5e7eb; }
+        .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: #eef2ff; color: #3730a3; }
+    </style>
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo"><i class="fas fa-undo"></i> NanoBanana ERP — Devolução</div>
+        <div class="user-info">
+            <span th:text="${usuario.nome}">Usuário</span>
+            <a th:href="@{'/pdv/recibo/' + ${venda.id}}"><i class="fas fa-receipt"></i> Recibo</a>
+            <a href="/pdv/historico"><i class="fas fa-history"></i> Histórico</a>
+            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h1>Registar devolução</h1>
+            <p class="muted">Venda <strong th:text="${#strings.substring(venda.id.toString(),0,8).toUpperCase()}"></strong> — <span th:text="${#temporals.format(venda.dataHora,'dd/MM/yyyy HH:mm')}"></span> — Total: <strong th:text="${#numbers.formatDecimal(venda.total,1,'COMMA',2,'POINT')} + ' MZN'"></strong> <span class="pill" th:text="${venda.metodoPagamento}"></span></p>
+            <p class="muted" style="margin-top:6px;">Devolução parcial ou total. Indique as quantidades a devolver por item. Para <strong>troca</strong>, registe a devolução e depois efectue uma nova venda no PDV.</p>
+
+            <div th:if="${sucesso}" class="alert alert-ok" th:text="${sucesso}"></div>
+            <div th:if="${erro}" class="alert alert-err" th:text="${erro}"></div>
+        </div>
+
+        <form method="post" th:action="@{'/pdv/devolucao/' + ${venda.id}}">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <div class="card">
+                <h2><i class="fas fa-boxes"></i> Itens da venda</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Vendido</th>
+                            <th>Já devolvido</th>
+                            <th>Disponível</th>
+                            <th>Qtd a devolver</th>
+                            <th>Preço un.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${itens}">
+                            <td th:text="${item.nomeProduto}">Produto</td>
+                            <td th:text="${item.quantidade}">0</td>
+                            <td th:text="${jaDevolvido[item.id]}">0</td>
+                            <td th:text="${disponivel[item.id]}">0</td>
+                            <td style="max-width:140px;">
+                                <input type="number" min="0" th:attr="max=${disponivel[item.id]}, name=${'qtd_' + item.id}" value="0" th:disabled="${disponivel[item.id] == 0}">
+                            </td>
+                            <td th:text="${#numbers.formatDecimal(item.precoUnitario,1,'COMMA',2,'POINT')} + ' MZN'">0,00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-clipboard-check"></i> Detalhes da devolução</h2>
+                <div class="row">
+                    <div class="form-row">
+                        <label>Motivo (obrigatório)</label>
+                        <textarea name="motivo" rows="3" required placeholder="Ex: Produto defeituoso, cliente desistiu, erro no pedido..."></textarea>
+                    </div>
+                    <div>
+                        <div class="form-row">
+                            <label><input type="checkbox" name="reporStock" value="true" checked> Repor stock dos itens devolvidos</label>
+                            <p class="muted">Desmarque se o produto não voltar ao stock (ex.: danificado/descartado).</p>
+                        </div>
+                        <div class="form-row" style="margin-top:18px;">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-undo"></i> Confirmar devolução</button>
+                            <a th:href="@{'/pdv/recibo/' + ${venda.id}}" class="btn btn-ghost" style="margin-left:8px;">Cancelar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="card" th:if="${!#lists.isEmpty(devolucoes)}">
+            <h2><i class="fas fa-history"></i> Devoluções registadas desta venda</h2>
+            <table>
+                <thead><tr><th>Data/Hora</th><th>Valor</th><th>Repôs stock</th><th>Motivo</th></tr></thead>
+                <tbody>
+                    <tr th:each="d : ${devolucoes}">
+                        <td th:text="${#temporals.format(d.dataHora,'dd/MM/yyyy HH:mm')}">-</td>
+                        <td th:text="${#numbers.formatDecimal(d.valorTotal,1,'COMMA',2,'POINT')} + ' MZN'">-</td>
+                        <td th:text="${d.reporStock ? 'Sim' : 'Não'}">-</td>
+                        <td th:text="${d.motivo}">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -6,10 +6,12 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -20,6 +22,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
@@ -56,7 +59,15 @@ public class AdminController {
     private AuditoriaLogRepository auditoriaLogRepo;
 
     @Autowired
+    private CupomRepository cupomRepository;
+
+    @Autowired
     private com.nanobanana.service.AdminService adminService;
+
+    @Value("${app.subscription.price:350.00}")
+    private BigDecimal subscriptionPrice;
+
+    private static final Pattern CUPOM_CODE_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{3,50}$");
 
     // --- Login Admin ---
 
@@ -139,15 +150,10 @@ public class AdminController {
                 .sum();
 
         // Vendas globais hoje
-        double vendasHoje = 0.0;
         LocalDateTime inicioDia = hoje.atStartOfDay();
         LocalDateTime fimDia = hoje.plusDays(1).atStartOfDay();
-        for (Tenant t : tenants) {
-            BigDecimal totalTenant = vendaRepo.somaVendasPeriodo(t.getId(), inicioDia, fimDia);
-            if (totalTenant != null) {
-                vendasHoje += totalTenant.doubleValue();
-            }
-        }
+        BigDecimal totalVendasHoje = vendaRepo.somaVendasGlobalPeriodo(inicioDia, fimDia);
+        double vendasHoje = totalVendasHoje != null ? totalVendasHoje.doubleValue() : 0.0;
 
         // Total produtos em stock
         long totalProdutos = produtoRepo.count();
@@ -178,11 +184,12 @@ public class AdminController {
     // --- Confirmar pagamento ---
 
     @PostMapping("/confirmar-pagamento/{id}")
-    public String confirmarPagamento(@PathVariable Long id) {
+    public String confirmarPagamento(@PathVariable Long id, RedirectAttributes redirectAttrs) {
         try {
             adminService.confirmarPagamento(id);
-        } catch (IllegalArgumentException ignored) {
-            // cliente/pagamento removido entre a listagem e a ação
+            redirectAttrs.addFlashAttribute("sucesso", "Pagamento confirmado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage() != null ? e.getMessage() : "Pagamento inválido ou removido.");
         }
         return "redirect:/admin";
     }
@@ -190,19 +197,23 @@ public class AdminController {
     // --- Ativar/Desativar cliente ---
 
     @PostMapping("/cliente/{id}/ativar")
-    public String ativarCliente(@PathVariable UUID id) {
+    public String ativarCliente(@PathVariable UUID id, RedirectAttributes redirectAttrs) {
         try {
             adminService.ativarCliente(id);
-        } catch (IllegalArgumentException ignored) {
+            redirectAttrs.addFlashAttribute("sucesso", "Cliente ativado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage() != null ? e.getMessage() : "Cliente inválido ou inexistente.");
         }
         return "redirect:/admin";
     }
 
     @PostMapping("/cliente/{id}/desativar")
-    public String desativarCliente(@PathVariable UUID id) {
+    public String desativarCliente(@PathVariable UUID id, RedirectAttributes redirectAttrs) {
         try {
             adminService.desativarCliente(id);
-        } catch (IllegalArgumentException ignored) {
+            redirectAttrs.addFlashAttribute("sucesso", "Cliente desativado.");
+        } catch (IllegalArgumentException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage() != null ? e.getMessage() : "Cliente inválido ou inexistente.");
         }
         return "redirect:/admin";
     }
@@ -210,10 +221,12 @@ public class AdminController {
     // --- Estender teste ---
 
     @PostMapping("/cliente/{id}/estender-teste")
-    public String estenderTeste(@PathVariable UUID id) {
+    public String estenderTeste(@PathVariable UUID id, RedirectAttributes redirectAttrs) {
         try {
             adminService.estenderTeste(id, 15);
-        } catch (IllegalArgumentException ignored) {
+            redirectAttrs.addFlashAttribute("sucesso", "Teste estendido por 15 dias.");
+        } catch (IllegalArgumentException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage() != null ? e.getMessage() : "Cliente inválido ou inexistente.");
         }
         return "redirect:/admin";
     }
@@ -239,7 +252,7 @@ public class AdminController {
                 .filter(v -> v.getStatus() == Venda.Status.CONCLUIDA)
                 .mapToDouble(v -> v.getTotal().doubleValue())
                 .sum();
-        double totalFiado = fiados.stream().filter(f -> !f.isPago()).mapToDouble(f -> f.getValor().doubleValue()).sum();
+        double totalFiado = fiados.stream().filter(f -> !f.isPago() && !f.isCancelado()).mapToDouble(f -> f.getValor().doubleValue()).sum();
         double valorStock = produtos.stream().mapToDouble(p -> p.getValorStock().doubleValue()).sum();
 
         model.addAttribute("cliente", tenant);
@@ -286,27 +299,30 @@ public class AdminController {
             periodoLabel = "Todas as Vendas";
         }
 
-        // Agregar vendas de todos os clientes
+        List<Usuario> owners = usuarioRepo.findByRole(Usuario.Role.DONO);
+        Map<UUID, String> ownerNames = owners.stream()
+                .collect(Collectors.toMap(Usuario::getTenantId, Usuario::getNome, (a, b) -> a));
+
+        List<Venda> vendasNoPeriodo = vendaRepo.findAllByDataHoraBetween(inicio, fim);
+
+        Map<UUID, Tenant> tenantMap = tenants.stream().collect(Collectors.toMap(Tenant::getId, t -> t));
+
         List<Map<String, Object>> todasVendas = new ArrayList<>();
         double totalGeral = 0;
-        
-        for (Tenant t : tenants) {
-            // Find owner of store
-            Optional<Usuario> ownerOpt = usuarioRepo.findAll().stream()
-                    .filter(u -> u.getTenantId().equals(t.getId()) && u.getRole() == Usuario.Role.DONO)
-                    .findFirst();
-            String ownerName = ownerOpt.map(Usuario::getNome).orElse("Dono Desconhecido");
 
-            List<Venda> vendas = vendaRepo.findByTenantIdAndDataHoraBetween(t.getId(), inicio, fim);
-            for (Venda v : vendas) {
-                Map<String, Object> dados = new HashMap<>();
-                dados.put("venda", v);
-                dados.put("clienteNome", ownerName);
-                dados.put("clienteNegocio", t.getNome());
-                todasVendas.add(dados);
-                if (v.getStatus() == Venda.Status.CONCLUIDA) {
-                    totalGeral += v.getTotal().doubleValue();
-                }
+        for (Venda v : vendasNoPeriodo) {
+            Map<String, Object> dados = new HashMap<>();
+            Tenant t = tenantMap.get(v.getTenantId());
+            if (t == null) {
+                continue;
+            }
+
+            dados.put("venda", v);
+            dados.put("clienteNome", ownerNames.getOrDefault(t.getId(), "Dono Desconhecido"));
+            dados.put("clienteNegocio", t.getNome());
+            todasVendas.add(dados);
+            if (v.getStatus() == Venda.Status.CONCLUIDA) {
+                totalGeral += v.getTotal().doubleValue();
             }
         }
 
@@ -332,18 +348,29 @@ public class AdminController {
         if (!isAdmin(session)) return "redirect:/admin/login";
 
         List<Tenant> tenants = tenantRepo.findAll();
-        List<Map<String, Object>> ranking = new ArrayList<>();
         LocalDate hoje = LocalDate.now();
         LocalDateTime inicioMes = hoje.withDayOfMonth(1).atStartOfDay();
         LocalDateTime fimMes = hoje.plusDays(1).atStartOfDay().minusNanos(1);
 
+        Map<UUID, Double> vendasMesPorTenant = new HashMap<>();
+        for (Object[] row : vendaRepo.somaConcluidasPorTenantPeriodo(inicioMes, fimMes)) {
+            vendasMesPorTenant.put((UUID) row[0], ((BigDecimal) row[1]).doubleValue());
+        }
+        Map<UUID, Long> qtdVendasPorTenant = new HashMap<>();
+        for (Object[] row : vendaRepo.countVendasPorTenant()) {
+            qtdVendasPorTenant.put((UUID) row[0], ((Number) row[1]).longValue());
+        }
+        Map<UUID, Double> totalFiadoPorTenant = new HashMap<>();
+        for (Object[] row : fiadoRepo.totalNaoPagoPorTenant()) {
+            totalFiadoPorTenant.put((UUID) row[0], ((BigDecimal) row[1]).doubleValue());
+        }
+
+        List<Map<String, Object>> ranking = new ArrayList<>();
+
         for (Tenant t : tenants) {
-            BigDecimal totalVendas = vendaRepo.somaVendasPeriodo(t.getId(), inicioMes, fimMes);
-            double vendasMes = totalVendas != null ? totalVendas.doubleValue() : 0.0;
-            
-            List<Fiado> fiados = fiadoRepo.findByTenantId(t.getId());
-            double totalFiado = fiados.stream().filter(f -> !f.isPago()).mapToDouble(f -> f.getValor().doubleValue()).sum();
-            long qtdVendas = vendaRepo.countByTenantId(t.getId());
+            double vendasMes = vendasMesPorTenant.getOrDefault(t.getId(), 0.0);
+            double totalFiado = totalFiadoPorTenant.getOrDefault(t.getId(), 0.0);
+            long qtdVendas = qtdVendasPorTenant.getOrDefault(t.getId(), 0L);
 
             Map<String, Object> dados = new HashMap<>();
             dados.put("cliente", t);
@@ -364,13 +391,14 @@ public class AdminController {
     // ========================================
 
     @PostMapping("/cliente/{id}/apagar")
-    public String apagarCliente(@PathVariable UUID id) {
+    public String apagarCliente(@PathVariable UUID id, RedirectAttributes redirectAttrs) {
         try {
             adminService.apagarCliente(id);
-        } catch (IllegalArgumentException ignored) {
-            // cliente removido entre a listagem e a ação
+            redirectAttrs.addFlashAttribute("sucesso", "Cliente anonimizado e desativado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage() != null ? e.getMessage() : "Cliente inválido ou inexistente.");
         }
-        return "redirect:/admin?apagado";
+        return "redirect:/admin";
     }
 
     // ========================================
@@ -378,13 +406,14 @@ public class AdminController {
     // ========================================
 
     @PostMapping("/cliente/{id}/reset-senha")
-    public String resetSenha(@PathVariable UUID id, @RequestParam String novaSenha) {
+    public String resetSenha(@PathVariable UUID id, @RequestParam String novaSenha, RedirectAttributes redirectAttrs) {
         try {
             adminService.resetSenhaDono(id, novaSenha);
-        } catch (IllegalArgumentException ignored) {
-            // tenant/dono inexistente
+            redirectAttrs.addFlashAttribute("sucesso", "Senha do DONO redefinida com sucesso.");
+        } catch (IllegalArgumentException e) {
+            redirectAttrs.addFlashAttribute("erro", e.getMessage() != null ? e.getMessage() : "Não foi possível redefinir a senha.");
         }
-        return "redirect:/admin?senhaReset";
+        return "redirect:/admin";
     }
 
     // ========================================
@@ -394,14 +423,9 @@ public class AdminController {
     @GetMapping("/config")
     public String config(HttpSession session, Model model) {
         if (!isAdmin(session)) return "redirect:/admin/login";
-        model.addAttribute("precoAtual", 350.0);
+        // Preço configurado no servidor via APP_SUBSCRIPTION_PRICE; a alteração exige deploy/reinício.
+        model.addAttribute("precoAtual", subscriptionPrice);
         return "admin-config";
-    }
-
-    @PostMapping("/config/preco")
-    public String atualizarPreco(@RequestParam Double preco) {
-        log.info("Preço da assinatura atualizado para {}", preco);
-        return "redirect:/admin/config?precoAtualizado";
     }
 
     // ========================================
@@ -461,22 +485,6 @@ public class AdminController {
     }
 
     // ========================================
-    // 🌟 #3: Mensagem Global
-    // ========================================
-
-    @PostMapping("/mensagem-global")
-    public String mensagemGlobal(
-            @RequestParam String titulo,
-            @RequestParam String mensagem,
-            HttpSession session) {
-
-        if (!isAdmin(session)) return "redirect:/admin/login";
-
-        log.info("Mensagem global enviada: {} - {}", titulo, mensagem);
-        return "redirect:/admin?msgEnviada";
-    }
-
-    // ========================================
     // 🌟 #8: Log de Atividades
     // ========================================
 
@@ -508,15 +516,67 @@ public class AdminController {
     public String cupoes(HttpSession session, Model model) {
         if (!isAdmin(session)) return "redirect:/admin/login";
         model.addAttribute("clientes", tenantRepo.findAll());
+        model.addAttribute("cupoms", cupomRepository.findAllByOrderByCriadoEmDesc());
         return "admin-cupoes";
     }
 
     @PostMapping("/cupao/criar")
     public String criarCupao(
             @RequestParam String codigo,
-            @RequestParam Double descontoPercent,
-            @RequestParam(required = false) UUID clienteId) {
-        log.info("Cupão criado: {} ({}%) para cliente {}", codigo, descontoPercent, clienteId);
-        return "redirect:/admin/cupoes?cupaoCriado";
+            @RequestParam String descontoPercent,
+            @RequestParam(required = false) String clienteId,
+            HttpSession session,
+            RedirectAttributes redirectAttrs) {
+        if (!isAdmin(session)) {
+            redirectAttrs.addFlashAttribute("erro", "Sessão de administrador inválida.");
+            return "redirect:/admin/login";
+        }
+
+        String codigoLimpo = codigo != null ? codigo.trim().toUpperCase() : "";
+        if (!CUPOM_CODE_PATTERN.matcher(codigoLimpo).matches()) {
+            redirectAttrs.addFlashAttribute("erro", "Código inválido. Use 3–50 caracteres: letras, números, '-' ou '_'.");
+            return "redirect:/admin/cupoes";
+        }
+
+        BigDecimal desconto;
+        try {
+            desconto = new BigDecimal(descontoPercent);
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("erro", "Desconto inválido.");
+            return "redirect:/admin/cupoes";
+        }
+        if (desconto.compareTo(BigDecimal.ZERO) <= 0 || desconto.compareTo(new BigDecimal("100")) > 0) {
+            redirectAttrs.addFlashAttribute("erro", "O desconto deve ser maior que 0 e no máximo 100%.");
+            return "redirect:/admin/cupoes";
+        }
+
+        UUID tenantId = null;
+        String clienteIdTexto = clienteId != null ? clienteId.trim() : "";
+        if (!clienteIdTexto.isEmpty()) {
+            try {
+                tenantId = UUID.fromString(clienteIdTexto);
+            } catch (IllegalArgumentException e) {
+                redirectAttrs.addFlashAttribute("erro", "Cliente inválido.");
+                return "redirect:/admin/cupoes";
+            }
+            if (!tenantRepo.existsById(tenantId)) {
+                redirectAttrs.addFlashAttribute("erro", "Cliente não encontrado.");
+                return "redirect:/admin/cupoes";
+            }
+        }
+
+        if (cupomRepository.findByCodigoIgnoreCase(codigoLimpo).isPresent()) {
+            redirectAttrs.addFlashAttribute("erro", "Já existe um cupão com o código " + codigoLimpo + ".");
+            return "redirect:/admin/cupoes";
+        }
+
+        Cupom cupom = new Cupom();
+        cupom.setCodigo(codigoLimpo);
+        cupom.setDescontoPercent(desconto);
+        cupom.setTenantId(tenantId);
+        cupomRepository.save(cupom);
+        redirectAttrs.addFlashAttribute("sucesso", "Cupão " + cupom.getCodigo() + " criado.");
+
+        return "redirect:/admin/cupoes";
     }
 }

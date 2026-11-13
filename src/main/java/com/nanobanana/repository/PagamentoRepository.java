@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface PagamentoRepository extends JpaRepository<Pagamento, Long> {
     List<Pagamento> findByClienteId(UUID clienteId);
+    List<Pagamento> findTop3ByClienteIdOrderByDataDesc(UUID clienteId);
+    boolean existsByClienteIdAndConfirmadoFalse(UUID clienteId);
 }

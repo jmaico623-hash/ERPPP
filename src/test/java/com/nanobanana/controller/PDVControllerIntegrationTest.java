@@ -65,6 +65,9 @@ class PDVControllerIntegrationTest {
     private com.nanobanana.service.VendaService vendaService;
 
     @MockBean
+    private com.nanobanana.service.DevolucaoService devolucaoService;
+
+    @MockBean
     private AuditoriaLogRepository auditoriaLogRepository;
 
     @MockBean
@@ -75,7 +78,8 @@ class PDVControllerIntegrationTest {
         when(authService.getUsuarioLogado()).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/pdv"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/login"));
     }
 
     @Test

@@ -1,64 +1,247 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - NanoBanana ERP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .navbar .logo { font-size: 20px; font-weight: 600; }
-        .navbar .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
-        .navbar a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        .page-header { margin-bottom: 30px; }
-        .page-header h1 { font-size: 28px; color: #333; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .stat-card .icon { width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px; }
-        .stat-card .icon.green { background: #e8f5e9; color: #4caf50; }
-        .stat-card h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
-        .stat-card .value { font-size: 32px; font-weight: 700; color: #333; }
-        .stat-card .sub { font-size: 13px; color: #999; margin-top: 5px; }
-        .actions { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 12px 24px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary { background: #27ae60; color: white; }
-        .btn-primary:hover { background: #229954; }
-    </style>
+    <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="stylesheet" href="/css/theme.css">
     <script defer src="/js/theme.js"></script>
 </head>
-<body>
-    <div class="navbar">
-        <div class="logo"><i class="fas fa-cash-register"></i> NanoBanana ERP</div>
-        <div class="user-info">
-            <span>💰 <span th:text="${usuario.nome}">Vendedor</span></span>
-            <a href="/pdv"><i class="fas fa-cash-register"></i> PDV</a>
-            <a href="/logout"><i class="fas fa-sign-out-alt"></i> Sair</a>
-        </div>
-    </div>
+<body class="dash-body">
+<div class="dash-shell">
 
-    <div class="container">
-        <div class="page-header">
-            <h1>👋 Olá, <span th:text="${usuario.nome}">Vendedor</span>!</h1>
-            <p>Resumo do seu desempenho hoje</p>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="icon green"><i class="fas fa-receipt"></i></div>
-                <h3>Suas Vendas Hoje</h3>
-                <div class="value" th:text="${quantidadeVendas}">0</div>
-                <div class="sub" th:text="'Total: ' + ${totalVendas} + ' MZN'"></div>
+    <aside class="dash-sidebar">
+        <div class="dash-brand">
+            <span class="logo-mark"><i class="fas fa-leaf"></i></span>
+            <div>
+                <strong>NanoBanana ERP</strong>
+                <small th:text="${nomeLoja}">Minha loja</small>
             </div>
         </div>
 
-        <div class="actions">
-            <a href="/pdv" class="btn btn-primary"><i class="fas fa-cash-register"></i> Abrir PDV</a>
-            <a href="/pdv/historico" class="btn btn-primary"><i class="fas fa-history"></i> Minhas Vendas</a>
+        <nav class="dash-nav">
+            <a href="/dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="/pdv"><i class="fas fa-cash-register"></i> PDV (Vender)</a>
+            <a href="/pdv/historico"><i class="fas fa-history"></i> Minhas vendas</a>
+            <a href="/caixa"><i class="fas fa-money-bill-wave"></i> Caixa</a>
+            <a href="/fiados"><i class="fas fa-book-open"></i> Fiados</a>
+        </nav>
+
+        <div class="dash-sidebar-footer">
+            <div class="plan-name">
+                <span class="dot"></span> Plano <span th:text="${planoLabel}">Teste</span>
+            </div>
+            <div class="plan-info" th:text="${nomeLoja}">Minha loja</div>
         </div>
+    </aside>
+
+    <div class="dash-main">
+        <header class="dash-topbar">
+            <div class="dash-topbar-left">
+                <div>
+                    <div class="topbar-store" th:text="${nomeLoja}">Minha loja</div>
+                    <span class="topbar-sub">Painel do vendedor</span>
+                </div>
+            </div>
+            <div class="dash-topbar-right">
+                <span class="status-chip" th:classappend="${caixaAberto != null} ? 'open' : 'closed'">
+                    <span class="dot"></span>
+                    <span th:text="${caixaAberto != null} ? 'Caixa aberto' : 'Caixa fechado'">Caixa fechado</span>
+                </span>
+                <div class="user-chip">
+                    <span class="avatar" th:text="${#strings.toUpperCase(#strings.substring(usuario.nome, 0, 1))}">V</span>
+                    <div class="user-meta">
+                        <strong th:text="${usuario.nome}">Vendedor</strong>
+                        <small>Vendedor</small>
+                    </div>
+                </div>
+                <a href="/logout" class="icon-btn" title="Sair" aria-label="Sair"><i class="fas fa-right-from-bracket"></i></a>
+            </div>
+        </header>
+
+        <main class="dash-content">
+            <div class="dash-header">
+                <div>
+                    <span class="eyebrow"><i class="fas fa-hand-wave"></i> O seu desempenho</span>
+                    <h1>Olá, <span th:text="${usuario.nome}">Vendedor</span>!</h1>
+                    <p th:text="|Acompanhe as suas vendas · ${periodoLabel} · ${#temporals.format(hoje, 'dd/MM/yyyy')}|">Acompanhe as suas vendas</p>
+                </div>
+                <div class="dash-actions">
+                    <a href="/pdv" class="btn-dash primary"><i class="fas fa-cash-register"></i> Abrir PDV</a>
+                    <a href="/pdv/historico" class="btn-dash ghost"><i class="fas fa-history"></i> Minhas vendas</a>
+                </div>
+            </div>
+
+            <div class="dash-filter-row">
+                <div class="period-tabs">
+                    <a th:href="@{/dashboard(periodo='hoje')}" th:classappend="${periodo == 'hoje'} ? 'active' : ''">Hoje</a>
+                    <a th:href="@{/dashboard(periodo='semana')}" th:classappend="${periodo == 'semana'} ? 'active' : ''">7 dias</a>
+                    <a th:href="@{/dashboard(periodo='mes')}" th:classappend="${periodo == 'mes'} ? 'active' : ''">30 dias</a>
+                </div>
+                <span class="filter-hint"><i class="fas fa-circle-info"></i> Apenas as suas vendas aparecem neste painel.</span>
+            </div>
+
+            <div class="dash-alert" th:if="${caixaAberto == null}">
+                <span class="dash-alert-icon"><i class="fas fa-cash-register"></i></span>
+                <div class="dash-alert-body">
+                    <strong>O caixa ainda não está aberto</strong>
+                    <span>Abra o caixa antes de começar a registar vendas.</span>
+                </div>
+                <a href="/caixa" class="dash-alert-link">Abrir caixa →</a>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Minhas vendas</span>
+                        <span class="kpi-icon"><i class="fas fa-sack-dollar"></i></span>
+                    </div>
+                    <div class="kpi-value" th:text="|MZN ${#numbers.formatDecimal(totalVendas, 1, 2)}|">MZN 0,00</div>
+                    <div class="kpi-sub" th:text="|${quantidadeVendas} venda(s) · ${periodoLabel}|">0 vendas</div>
+                    <span class="trend" th:if="${variacaoVendas != null}"
+                          th:classappend="${variacaoVendas.signum() >= 0} ? 'up' : 'down'">
+                        <i class="fas" th:classappend="${variacaoVendas.signum() >= 0} ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'"></i>
+                        <span th:text="|${#numbers.formatDecimal(variacaoVendas, 1, 1)}% vs. período anterior|"></span>
+                    </span>
+                    <span class="trend flat" th:if="${variacaoVendas == null}">Sem base de comparação</span>
+                </div>
+
+                <div class="kpi-card accent-blue">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Nº de vendas</span>
+                        <span class="kpi-icon"><i class="fas fa-receipt"></i></span>
+                    </div>
+                    <div class="kpi-value" th:text="${quantidadeVendas}">0</div>
+                    <div class="kpi-sub">Vendas concluídas no período</div>
+                    <span class="trend" th:if="${variacaoQuantidade != null}"
+                          th:classappend="${variacaoQuantidade.signum() >= 0} ? 'up' : 'down'">
+                        <i class="fas" th:classappend="${variacaoQuantidade.signum() >= 0} ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'"></i>
+                        <span th:text="|${#numbers.formatDecimal(variacaoQuantidade, 1, 1)}% vs. período anterior|"></span>
+                    </span>
+                </div>
+
+                <div class="kpi-card accent-amber">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Ticket médio</span>
+                        <span class="kpi-icon"><i class="fas fa-coins"></i></span>
+                    </div>
+                    <div class="kpi-value" th:text="|MZN ${#numbers.formatDecimal(ticketMedio, 1, 2)}|">MZN 0,00</div>
+                    <div class="kpi-sub">Valor médio por venda</div>
+                </div>
+
+                <div class="kpi-card accent-violet">
+                    <div class="kpi-top">
+                        <span class="kpi-label">Posição no ranking</span>
+                        <span class="kpi-icon"><i class="fas fa-trophy"></i></span>
+                    </div>
+                    <div class="kpi-value" th:if="${posicaoRanking > 0}" th:text="|#${posicaoRanking}|">#1</div>
+                    <div class="kpi-value" th:if="${posicaoRanking == 0}">—</div>
+                    <div class="kpi-sub" th:if="${posicaoRanking > 0}"
+                         th:text="|Entre ${totalVendedoresRanking} vendedor(es) · ${periodoLabel}|">Entre vendedores</div>
+                    <div class="kpi-sub" th:if="${posicaoRanking == 0}">Registe uma venda para entrar no ranking</div>
+                </div>
+            </div>
+
+            <div class="dash-grid-2">
+                <section class="dash-card">
+                    <div class="dash-card-header">
+                        <h2><i class="fas fa-clock-rotate-left"></i> Minhas vendas recentes</h2>
+                        <a href="/pdv/historico" class="card-link">Ver todas →</a>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead>
+                            <tr>
+                                <th>Total</th>
+                                <th>Pagamento</th>
+                                <th>Data</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="v : ${vendasRecentes}">
+                                <td class="num mono" th:text="|MZN ${#numbers.formatDecimal(v.total, 1, 2)}|">MZN 0,00</td>
+                                <td><span class="chip" th:classappend="${v.metodoClasse}" th:text="${v.metodo}">Dinheiro</span></td>
+                                <td class="nowrap" th:text="${#temporals.format(v.dataHora, 'dd/MM HH:mm')}">00/00 00:00</td>
+                                <td class="num">
+                                    <a th:href="@{/pdv/recibo/{id}(id=${v.id})}" class="icon-btn" title="Ver recibo"
+                                       style="width:30px;height:30px;border-radius:8px;">
+                                        <i class="fas fa-receipt" style="font-size:11px;"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(vendasRecentes)}">
+                                <td colspan="4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-receipt"></i>
+                                        <strong>Nenhuma venda no período</strong>
+                                        Abra o PDV para registar a primeira venda.
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="dash-card">
+                    <div class="dash-card-header">
+                        <h2><i class="fas fa-fire"></i> Produtos que mais vendeu</h2>
+                    </div>
+                    <div class="dash-card-body">
+                        <div class="bar-list" th:if="${not #lists.isEmpty(topProdutos)}">
+                            <div class="bar-item" th:each="p : ${topProdutos}">
+                                <div class="bar-top">
+                                    <span class="bar-name" th:text="${p.nome}">Produto</span>
+                                    <span class="bar-meta" th:text="|${p.quantidade} un. · MZN ${#numbers.formatDecimal(p.total, 1, 2)}|">0 un.</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div class="bar-fill violet" th:style="|width:${p.percentual}%|"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="empty-state" th:if="${#lists.isEmpty(topProdutos)}">
+                            <i class="fas fa-box-open"></i>
+                            <strong>Ainda sem produtos vendidos</strong>
+                            As suas vendas aparecem aqui.
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section class="dash-card">
+                <div class="dash-card-header">
+                    <h2><i class="fas fa-circle-info"></i> Resumo do período</h2>
+                    <span class="card-link" th:text="${periodoLabel}">Hoje</span>
+                </div>
+                <div class="dash-card-body">
+                    <div class="fin-row">
+                        <span class="fin-label"><i class="fas fa-cart-shopping"></i> Total vendido</span>
+                        <span class="fin-value" th:text="|MZN ${#numbers.formatDecimal(totalVendas, 1, 2)}|">MZN 0,00</span>
+                    </div>
+                    <div class="fin-row">
+                        <span class="fin-label"><i class="fas fa-receipt"></i> Número de vendas</span>
+                        <span class="fin-value" th:text="${quantidadeVendas}">0</span>
+                    </div>
+                    <div class="fin-row">
+                        <span class="fin-label"><i class="fas fa-coins"></i> Ticket médio</span>
+                        <span class="fin-value" th:text="|MZN ${#numbers.formatDecimal(ticketMedio, 1, 2)}|">MZN 0,00</span>
+                    </div>
+                    <div class="fin-row">
+                        <span class="fin-label"><i class="fas fa-cash-register"></i> Estado do caixa</span>
+                        <span class="fin-value">
+                            <span class="status-chip" th:classappend="${caixaAberto != null} ? 'open' : 'closed'">
+                                <span class="dot"></span>
+                                <span th:text="${caixaAberto != null} ? 'Aberto' : 'Fechado'">Fechado</span>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
+</div>
 </body>
 </html>
