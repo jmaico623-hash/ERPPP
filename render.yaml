@@ -4,11 +4,10 @@ services:
     runtime: docker
     name: nanobanana-erp
     region: frankfurt
-    plan: 1c-2g # Sem hibernação: app responde rápido e não trava em produção
+    plan: free # Plano temporário (agora) enquanto o cartão de pagamento no Render não está ativo; upgrade para 1c-2g depois
     branch: master
     dockerfilePath: ./Dockerfile
     autoDeployTrigger: checksPass # Push na master só publica com CI verde
-    maxShutdownDelaySeconds: 60
     healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -54,7 +53,6 @@ databases:
   # PostgreSQL pago: sem expiração automática como no plano gratuito
   - name: nanobanana-db
     region: frankfurt
-    plan: 0.1c-256mb
+    plan: free # Plano temporário (agora) enquanto o cartão de pagamento no Render não está ativo; upgrade para 0.1c-256mb depois
     databaseName: nanobanana
-    diskSizeGB: 10
     ipAllowList: [] # Só a aplicação na rede privada do Render acessa o banco
