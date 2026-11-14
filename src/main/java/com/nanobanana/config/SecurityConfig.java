@@ -92,7 +92,9 @@ public class SecurityConfig {
                             com.nanobanana.util.TelefoneUtil.variantes(id));
             return usuarioOpt
                     .map(usuario -> org.springframework.security.core.userdetails.User.builder()
-                            .username(usuario.getEmail() != null && !usuario.getEmail().isBlank() ? usuario.getEmail() : (usuario.getTelefone() != null ? usuario.getTelefone() : id))
+                            // Mantém o identificador usado no login (email ou telefone) como nome do UserDetails,
+                            // para não haver divergência entre o identificador informado e o principal autenticado.
+                            .username(id)
                             .password(usuario.getSenha())
                             .roles(usuario.getRole().name())
                             .disabled(!usuario.isAtivo())
