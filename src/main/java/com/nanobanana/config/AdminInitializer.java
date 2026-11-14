@@ -44,7 +44,19 @@ public class AdminInitializer implements CommandLineRunner {
             return;
         }
 
+        var existente = adminRepository.findByEmail(adminEmail);
+        if (existente.isPresent()) {
+            Admin admin = existente.get();
+            if (!passwordEncoder.matches(adminPassword, admin.getSenha())) {
+                admin.setSenha(passwordEncoder.encode(adminPassword));
+                adminRepository.save(admin);
+                log.info("Senha do super administrador sincronizada a partir de ADMIN_PASSWORD para {}", adminEmail);
+            }
+            return;
+        }
+
         if (adminRepository.count() > 0) {
+            log.warn("Já existe um administrador com outro email; nenhum administrador foi criado para {}", adminEmail);
             return;
         }
 
