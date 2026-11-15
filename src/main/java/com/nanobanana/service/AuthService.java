@@ -107,6 +107,12 @@ public class AuthService {
      * Salva dados do usuário na sessão
      */
     public void salvarNaSessao(Usuario usuario, HttpSession session) {
+        // Um login de loja termina qualquer sessão de administrador activa
+        // no mesmo navegador (evita moldura de navegação inconsistente).
+        session.removeAttribute("admin");
+        session.removeAttribute("adminId");
+        session.removeAttribute("adminNome");
+
         session.setAttribute("usuarioId", usuario.getId());
         session.setAttribute("usuarioNome", usuario.getNome());
         session.setAttribute("usuarioEmail", usuario.getEmail());

@@ -1,135 +1,144 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criar Conta - NanoBanana ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" th:href="@{/css/variables.css}">
-    <link rel="stylesheet" th:href="@{/css/main.css}">
-    <style th:inline="css">
-        html { height: 100%; }
-        body.register-page { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: var(--text); }
-        body.register-page *, body.register-page *::before, body.register-page *::after { box-sizing: border-box; }
-        body.register-page button, body.register-page input { font-family: inherit; }
-        .register-page { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%); overflow-y: auto; }
-        .register-card { background: var(--card-bg); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 40px; width: 100%; max-width: 480px; margin: auto; }
-        .register-header { text-align: center; margin-bottom: 32px; }
-        .register-logo { width: 72px; height: 72px; background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-        .register-logo i { font-size: 28px; color: white; }
-        .register-header h1 { font-size: 24px; color: var(--text); margin: 0 0 8px; font-weight: 700; }
-        .register-header p { color: var(--text-muted); font-size: 14px; margin: 0; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 500; color: var(--text); font-size: 14px; }
-        .form-group label i { color: var(--text-muted); width: 20px; }
-        .form-group input { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 16px; color: var(--text); background: var(--card-bg); transition: var(--transition); }
-        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
-        .form-group input::placeholder { color: var(--text-light); }
-        .btn-register { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%); color: white; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-register:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .btn-register:active { transform: translateY(0); }
-        .btn-register:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-        .register-footer { text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-light); }
-        .register-footer a { color: var(--secondary); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
-        .register-footer a:hover { color: var(--secondary-dark); }
-        .test-info { background: var(--info-light); border: 1px solid var(--info); padding: 16px; border-radius: var(--radius); margin-top: 20px; text-align: center; }
-        .test-info h3 { color: var(--info); margin: 0 0 8px; font-size: 14px; }
-        .test-info p { color: var(--text-muted); font-size: 13px; margin: 0; }
-        .alert { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 20px; font-size: 14px; animation: slideIn 0.3s ease; }
-        .alert-error { background: var(--danger-light); border: 1px solid #f5c6cb; color: #721c24; }
-        .alert-success { background: var(--success-light); border: 1px solid #c8e6c9; color: #1b5e20; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/auth :: head('Criar conta - NanoBanana ERP')}"></head>
+<body>
+<div class="auth-shell">
+    <aside class="auth-aside">
+        <div class="auth-brand">
+            <span class="brand-mark"><i class="fas fa-leaf"></i></span>
+            <div>
+                <strong>NanoBanana ERP</strong>
+                <small>Gestão para o comércio lusófono</small>
+            </div>
+        </div>
 
-        /* Ecrãs mais baixos: compacta o formulário (a página continua a rolar se necessário) */
-        @media (max-height: 850px) {
-            .register-page { padding: 16px; }
-            .register-card { padding: 24px; }
-            .register-header { margin-bottom: 20px; }
-            .form-group { margin-bottom: 14px; }
-            .register-footer { margin-top: 16px; padding-top: 16px; }
+        <div class="auth-pitch">
+            <h2>Comece grátis em poucos minutos.</h2>
+            <p>15 dias sem custos, sem cartão de crédito. Ideal para mercearias, minimercados, boutiques e armazéns.</p>
+            <ul class="auth-features">
+                <li><i class="fas fa-check"></i> Ponto de venda rápido e simples</li>
+                <li><i class="fas fa-check"></i> Controlo de stock e fiados</li>
+                <li><i class="fas fa-check"></i> Relatórios de lucro e despesas</li>
+                <li><i class="fas fa-check"></i> Alertas de desvio e anomalias</li>
+            </ul>
+        </div>
+
+        <p class="auth-legal">NanoBanana ERP · Feito para o comércio lusófono</p>
+    </aside>
+
+    <main class="auth-main">
+        <div class="auth-card wide">
+            <div class="auth-header">
+                <span class="auth-eyebrow"><i class="fas fa-rocket"></i> 15 dias grátis</span>
+                <h1>Criar a sua conta</h1>
+                <p>Preencha os dados da sua loja para começar.</p>
+            </div>
+
+            <div th:if="${erro}" class="auth-alert error" role="alert">
+                <i class="fas fa-circle-exclamation"></i>
+                <span th:text="${erro}"></span>
+            </div>
+            <div th:if="${sucesso}" class="auth-alert success" role="alert">
+                <i class="fas fa-circle-check"></i>
+                <span th:text="${sucesso}"></span>
+            </div>
+
+            <form method="POST" action="/registrar" id="registerForm" class="auth-form">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+                <div class="auth-field">
+                    <label for="nomeCompleto">Nome completo</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="nomeCompleto" name="nomeCompleto" placeholder="Seu nome completo"
+                               required autocomplete="name">
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="nomeLoja">Nome da loja / negócio</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-store"></i>
+                        <input type="text" id="nomeLoja" name="nomeLoja" placeholder="Ex: Mercearia do João"
+                               required autocomplete="organization">
+                    </div>
+                </div>
+
+                <div class="auth-grid-2">
+                    <div class="auth-field">
+                        <label for="telefone">Telefone</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-phone"></i>
+                            <input type="tel" id="telefone" name="telefone" placeholder="Ex: +258 84 123 4567"
+                                   required autocomplete="tel">
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label for="email">Email (opcional)</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="email" name="email" placeholder="seu@email.com"
+                                   autocomplete="email">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-grid-2">
+                    <div class="auth-field">
+                        <label for="nacionalidade">Nacionalidade / país</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-flag"></i>
+                            <input type="text" id="nacionalidade" name="nacionalidade"
+                                   placeholder="Ex: Moçambique, Angola, Brasil…" required autocomplete="country-name">
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label for="provincia">Província / região</label>
+                        <div class="input-wrap">
+                            <i class="fas fa-location-dot"></i>
+                            <input type="text" id="provincia" name="provincia"
+                                   placeholder="Ex: Maputo, Luanda, São Paulo…" required autocomplete="address-level1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="senha">Senha</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="senha" name="senha" placeholder="Mínimo 8 caracteres"
+                               required minlength="8" autocomplete="new-password">
+                    </div>
+                    <span class="field-hint">Use pelo menos 8 caracteres.</span>
+                </div>
+
+                <button type="submit" class="btn-auth" id="registerBtn">
+                    <i class="fas fa-rocket"></i> Criar conta grátis
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <span>Já tem conta? <a href="/login">Entrar</a></span>
+            </div>
+
+            <div class="auth-note">
+                <strong>15 dias grátis.</strong> Após o período de teste, apenas 350 MZN/mês.
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var form = document.getElementById('registerForm');
+        var btn = document.getElementById('registerBtn');
+        if (form && btn) {
+            form.addEventListener('submit', function () {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando conta...';
+            });
         }
-        @media (max-width: 420px) {
-            .register-page { padding: 12px; }
-            .register-card { padding: 20px; }
-        }
-    </style>
-    <link rel="stylesheet" href="/css/theme.css">
-    <script defer src="/js/theme.js"></script>
-</head>
-<body class="register-page">
-    <div class="register-card">
-        <div class="register-header">
-            <div class="register-logo"><i class="fas fa-store" aria-hidden="true"></i></div>
-            <h1>Criar Sua Conta</h1>
-            <p>15 dias grátis, sem cartão de crédito — para países lusófonos</p>
-        </div>
-
-        <div th:if="${erro}" class="alert alert-error" role="alert">
-            <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
-            <span th:text="${erro}"></span>
-        </div>
-
-        <div th:if="${sucesso}" class="alert alert-success" role="alert">
-            <i class="fas fa-check-circle" aria-hidden="true"></i>
-            <span th:text="${sucesso}"></span>
-        </div>
-
-        <form method="POST" action="/registrar" id="registerForm">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-            <div class="form-group">
-                <label for="nomeCompleto"><i class="fas fa-user" aria-hidden="true"></i> Nome completo</label>
-                <input type="text" id="nomeCompleto" name="nomeCompleto" placeholder="Seu nome completo" required autocomplete="name">
-            </div>
-            <div class="form-group">
-                <label for="nomeLoja"><i class="fas fa-store" aria-hidden="true"></i> Nome da loja/negócio</label>
-                <input type="text" id="nomeLoja" name="nomeLoja" placeholder="Ex: Mercearia do João" required autocomplete="organization">
-            </div>
-            <div class="form-group">
-                <label for="telefone"><i class="fas fa-phone" aria-hidden="true"></i> Número de telefone</label>
-                <input type="tel" id="telefone" name="telefone" placeholder="Ex: +258 84 123 4567" required autocomplete="tel">
-            </div>
-            <div class="form-group">
-                <label for="email"><i class="fas fa-envelope" aria-hidden="true"></i> Email (opcional)</label>
-                <input type="email" id="email" name="email" placeholder="seu@email.com (opcional)" autocomplete="email">
-            </div>
-            <div class="form-group">
-                <label for="nacionalidade"><i class="fas fa-flag" aria-hidden="true"></i> Nacionalidade / País</label>
-                <input type="text" id="nacionalidade" name="nacionalidade" placeholder="Ex: Moçambique, Angola, Brasil, Portugal..." required autocomplete="country-name">
-            </div>
-            <div class="form-group">
-                <label for="provincia"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Província / Estado / Região</label>
-                <input type="text" id="provincia" name="provincia" placeholder="Ex: Maputo, Luanda, São Paulo..." required autocomplete="address-level1">
-            </div>
-            <div class="form-group">
-                <label for="senha"><i class="fas fa-lock" aria-hidden="true"></i> Senha</label>
-                <input type="password" id="senha" name="senha" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
-            </div>
-            <button type="submit" class="btn-register" id="registerBtn">
-                <i class="fas fa-rocket" aria-hidden="true"></i> Criar Conta Grátis
-            </button>
-        </form>
-
-        <div class="register-footer">
-            <a href="/login"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Já tenho conta</a>
-        </div>
-
-        <div class="test-info">
-            <h3>🎁 15 Dias Grátis</h3>
-            <p>Após o período de teste, apenas 350 MZN/mês</p>
-        </div>
-    </div>
-
-    <script th:inline="javascript">
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('registerForm');
-            const btn = document.getElementById('registerBtn');
-            if (form && btn) {
-                form.addEventListener('submit', () => {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
-                });
-            }
-        });
-    </script>
+    });
+</script>
 </body>
 </html>

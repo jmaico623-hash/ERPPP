@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title th:text="${titulo}">Administração - NanoBanana ERP</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
+</head>
+<body>
+
+<!-- ============================================================
+     Barra lateral — administração central
+     Parâmetro: chave do item ativo
+     ============================================================ -->
+<aside class="dash-sidebar" th:fragment="sidebar(ativo)">
+    <div class="dash-brand">
+        <span class="logo-mark"><i class="fas fa-shield-halved"></i></span>
+        <div>
+            <strong>NanoBanana</strong>
+            <small>Administração central</small>
+        </div>
+    </div>
+
+    <nav class="dash-nav">
+        <a href="/admin" th:classappend="${ativo == 'dashboard'} ? 'active'">
+            <i class="fas fa-gauge-high"></i> Dashboard
+        </a>
+        <a href="/admin/vendas" th:classappend="${ativo == 'vendas'} ? 'active'">
+            <i class="fas fa-cart-shopping"></i> Vendas globais
+        </a>
+        <a href="/admin/ranking" th:classappend="${ativo == 'ranking'} ? 'active'">
+            <i class="fas fa-trophy"></i> Ranking
+        </a>
+
+        <span class="dash-nav-label">Financeiro</span>
+        <a href="/admin/financeiro" th:classappend="${ativo == 'financeiro'} ? 'active'">
+            <i class="fas fa-chart-line"></i> Financeiro
+        </a>
+        <a href="/admin/pagamentos" th:classappend="${ativo == 'pagamentos'} ? 'active'">
+            <i class="fas fa-credit-card"></i> Pagamentos
+        </a>
+        <a href="/admin/cupoes" th:classappend="${ativo == 'cupoes'} ? 'active'">
+            <i class="fas fa-gift"></i> Cupões
+        </a>
+
+        <span class="dash-nav-label">Sistema</span>
+        <a href="/admin/config" th:classappend="${ativo == 'config'} ? 'active'">
+            <i class="fas fa-gear"></i> Configuração
+        </a>
+        <a href="/admin/logs" th:classappend="${ativo == 'logs'} ? 'active'">
+            <i class="fas fa-clipboard-list"></i> Logs
+        </a>
+    </nav>
+
+    <div class="dash-sidebar-footer">
+        <div class="plan-name"><span class="dot"></span> Sessão de administrador</div>
+        <div class="plan-info" th:text="${session.adminNome} ?: 'Administrador'">Administrador</div>
+        <a href="/dashboard">Voltar ao ERP <i class="fas fa-arrow-right"></i></a>
+    </div>
+</aside>
+
+<!-- ============================================================
+     Barra superior
+     Parâmetro: subtítulo da página
+     ============================================================ -->
+<header class="dash-topbar" th:fragment="topbar(subtitulo)">
+    <div class="dash-topbar-left">
+        <div>
+            <div class="topbar-store">Administração</div>
+            <span class="topbar-sub" th:text="${subtitulo}">Painel</span>
+        </div>
+    </div>
+    <div class="dash-topbar-right">
+        <div class="user-chip">
+            <span class="avatar">A</span>
+            <div class="user-meta">
+                <strong th:text="${session.adminNome} ?: 'Administrador'">Administrador</strong>
+                <small>Super administrador</small>
+            </div>
+        </div>
+        <button type="button" class="icon-btn" id="nbThemeToggle" aria-label="Alternar tema"></button>
+        <a href="/admin/logout" class="icon-btn" title="Sair" aria-label="Sair"><i class="fas fa-right-from-bracket"></i></a>
+    </div>
+</header>
+
+</body>
+</html>

@@ -1,61 +1,57 @@
 <!DOCTYPE html>
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estagnados - NanoBanana ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/theme.css">
-    <script defer src="/js/theme.js"></script>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="logo"><i class="fas fa-leaf"></i> NanoBanana ERP</div>
-        <div class="user-info">
-            <span class="badge-plano" th:text="${session.plano}"></span>
-            <span class="merchant-name" th:text="${session.clienteNegocio}"></span>
-            <span class="client-name" th:text="${session.clienteNome}"></span>
-            <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
-    </nav>
-    <div class="main-container">
-        <aside class="sidebar">
-            <ul>
-                <li><a href="/dashboard"><i class="fas fa-home"></i> Painel</a></li>
-                <li><a href="/pdv"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
-                <li><a href="/fiados"><i class="fas fa-book-open"></i> Fiado</a></li>
-                <li><a href="/inventario"><i class="fas fa-boxes"></i> Inventário</a></li>
-                <li class="active"><a href="/estagnados"><i class="fas fa-hourglass-end"></i> Estagnados</a></li>
-                <li><a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a></li>
-            </ul>
-        </aside>
-        <main class="content">
-            <h1>⏳ Dinheiro Adormecido</h1>
-            <p class="subtitle">Produtos sem venda há mais de 30 dias</p>
+<head th:replace="~{fragments/shell :: head('Produtos estagnados - NanoBanana ERP')}"></head>
+<body class="dash-body">
+<div class="dash-shell">
+    <aside th:replace="~{fragments/shell :: sidebar('estagnados')}"></aside>
 
-            <table class="nano-table">
-                <thead>
-                    <tr><th>Produto</th><th>Última Venda</th><th>Dias sem Venda</th><th>Valor Parado</th><th>Sugestão</th></tr>
-                </thead>
-                <tbody>
-                    <tr th:if="${#lists.isEmpty(estagnados)}">
-                        <td colspan="5" style="text-align:center;">✅ Nenhum produto estagnado! Todos estão a vender bem.</td>
-                    </tr>
-                    <tr th:each="p : ${estagnados}">
-                        <td th:text="${p.nome}"></td>
-                        <td th:text="${p.ultimaVenda} ?: 'Nunca'"></td>
-                        <td th:text="${p.diasSemVenda() > 365 ? '365+' : p.diasSemVenda()} + ' dias'"></td>
-                        <td th:text="${p.valorStock} + ' MZN'"></td>
-                        <td><span class="badge badge-warning">🔥 Fazer Promoção</span></td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="dash-main">
+        <header th:replace="~{fragments/shell :: topbar('Produtos estagnados')}"></header>
 
-            <div class="total-pendente" th:if="${!#lists.isEmpty(estagnados)}">
-                💸 Total dinheiro adormecido: <strong th:text="${totalParado} + ' MZN'"></strong>
+        <main class="dash-content">
+            <div class="dash-header">
+                <div>
+                    <span class="eyebrow"><i class="fas fa-hourglass-half"></i> Operação</span>
+                    <h1>Dinheiro adormecido</h1>
+                    <p>Produtos sem venda há mais de 30 dias.</p>
+                </div>
+            </div>
+
+            <div class="kpi-grid" th:if="${!#lists.isEmpty(estagnados)}">
+                <div class="kpi danger">
+                    <span class="label">Total de dinheiro parado</span>
+                    <span class="value" th:text="${totalParado} + ' MZN'">0 MZN</span>
+                </div>
+                <div class="kpi">
+                    <span class="label">Produtos estagnados</span>
+                    <span class="value" th:text="${#lists.size(estagnados)}">0</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-hourglass-half"></i> Produtos sem venda</h2>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Produto</th><th>Última venda</th><th>Dias sem venda</th><th>Valor parado</th><th>Sugestão</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(estagnados)}">
+                                <td colspan="5" class="muted center">Nenhum produto estagnado. Todos estão a vender bem.</td>
+                            </tr>
+                            <tr th:each="p : ${estagnados}">
+                                <td th:text="${p.nome}"></td>
+                                <td th:text="${p.ultimaVenda != null ? p.ultimaVenda : 'Nunca'}"></td>
+                                <td th:text="${(p.diasSemVenda() > 365 ? '365+' : p.diasSemVenda())} + ' dias'"></td>
+                                <td th:text="${p.valorStock} + ' MZN'"></td>
+                                <td><span class="badge badge-warning"><i class="fas fa-tag"></i> Fazer promoção</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
+</div>
 </body>
 </html>

@@ -43,7 +43,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 // Públicos
                 .requestMatchers("/", "/login", "/registrar", "/css/**", "/js/**", "/images/**",
-                        "/favicon.ico", "/error", "/h2-console/**").permitAll()
+                        "/favicon.ico", "/favicon.svg", "/error", "/h2-console/**").permitAll()
                 // Health check público (Render/Docker)
                 .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                 // Painel do super admin: protegido pelo AdminAuthInterceptor (sessão própria)

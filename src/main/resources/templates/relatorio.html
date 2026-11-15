@@ -1,149 +1,130 @@
 <!DOCTYPE html>
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Vendas - NanoBanana ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/theme.css">
-    <script defer src="/js/theme.js"></script>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="logo"><i class="fas fa-leaf"></i> NanoBanana ERP</div>
-        <div class="user-info">
-            <span class="badge-plano" th:text="${session.plano}"></span>
-            <span class="merchant-name" th:text="${session.clienteNegocio}"></span>
-            <span class="client-name" th:text="${session.clienteNome}"></span>
-            <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
-    </nav>
-    <div class="main-container">
-        <aside class="sidebar">
-            <ul>
-                <li><a href="/dashboard"><i class="fas fa-home"></i> Painel</a></li>
-                <li><a href="/pdv"><i class="fas fa-cart-plus"></i> Vender (PDV)</a></li>
-                <li><a href="/pdv/historico"><i class="fas fa-history"></i> Histórico</a></li>
-                <li class="active"><a href="/relatorio"><i class="fas fa-chart-bar"></i> Relatório</a></li>
-                <li><a href="/fiados"><i class="fas fa-book-open"></i> Fiado</a></li>
-                <li><a href="/despesas"><i class="fas fa-money-bill-wave"></i> Despesas</a></li>
-                <li><a href="/caixa"><i class="fas fa-cash-register"></i> Caixa</a></li>
-                <li><a href="/inventario"><i class="fas fa-boxes"></i> Inventário</a></li>
-                <li><a href="/estagnados"><i class="fas fa-hourglass-end"></i> Estagnados</a></li>
-                <li><a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a></li>
-            </ul>
-        </aside>
-        <main class="content">
-            <h1>📊 Relatório de Vendas</h1>
+<head th:replace="~{fragments/shell :: head('Relatório - NanoBanana ERP')}"></head>
+<body class="dash-body">
+<div class="dash-shell">
+    <aside th:replace="~{fragments/shell :: sidebar('relatorio')}"></aside>
 
-            <!-- Filtro por Período -->
-            <div class="periodo-filtro">
-                <a th:href="@{/relatorio(periodo='hoje')}" th:class="${periodo == 'hoje' || periodo == null ? 'btn-periodo active' : 'btn-periodo'}">📅 Hoje</a>
-                <a th:href="@{/relatorio(periodo='semana')}" th:class="${periodo == 'semana' ? 'btn-periodo active' : 'btn-periodo'}">📆 Esta Semana</a>
-                <a th:href="@{/relatorio(periodo='mes')}" th:class="${periodo == 'mes' ? 'btn-periodo active' : 'btn-periodo'}">🗓️ Este Mês</a>
+    <div class="dash-main">
+        <header th:replace="~{fragments/shell :: topbar('Relatório de vendas')}"></header>
+
+        <main class="dash-content">
+            <div class="dash-header">
+                <div>
+                    <span class="eyebrow"><i class="fas fa-chart-pie"></i> Análise</span>
+                    <h1>Relatório de vendas</h1>
+                    <p th:text="${periodoLabel}">Período</p>
+                </div>
+                <div class="period-tabs">
+                    <a th:href="@{/relatorio(periodo='hoje')}" th:classappend="${periodo == 'hoje' || periodo == null} ? 'active'">Hoje</a>
+                    <a th:href="@{/relatorio(periodo='semana')}" th:classappend="${periodo == 'semana'} ? 'active'">7 dias</a>
+                    <a th:href="@{/relatorio(periodo='mes')}" th:classappend="${periodo == 'mes'} ? 'active'">30 dias</a>
+                </div>
             </div>
 
-            <h2 th:text="${periodoLabel}"></h2>
-
-            <!-- Cards de Resumo -->
-            <div class="stats-grid relatorio-stats">
-                <div class="stat-card">
-                    <h3>💰 Vendas (Bruto)</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalVendas, 1, 2)} + ' MZN'">0 MZN</p>
-                    <small style="color:#666;">Nº vendas: <span th:text="${totalVendasCount}">0</span> | Média: <span th:text="${#numbers.formatDecimal(mediaVenda, 1, 2)} + ' MZN'">0</span></small>
+            <div class="kpi-grid">
+                <div class="kpi">
+                    <span class="label">Vendas (bruto)</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(totalVendas, 1, 2)} + ' MZN'">0 MZN</span>
+                    <span class="form-hint"><span th:text="${totalVendasCount}">0</span> vendas · média <span th:text="${#numbers.formatDecimal(mediaVenda, 1, 2)}">0</span></span>
                 </div>
-                <div class="stat-card" style="border-left:4px solid #e74c3c;">
-                    <h3>↩️ Devoluções</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalDevolucoes, 1, 2)} + ' MZN'">0 MZN</p>
+                <div class="kpi danger">
+                    <span class="label">Devoluções</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(totalDevolucoes, 1, 2)} + ' MZN'">0 MZN</span>
                 </div>
-                <div class="stat-card" style="border-left:4px solid #2980b9;">
-                    <h3>📥 Vendas Líquidas</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(vendasLiquidas, 1, 2)} + ' MZN'">0 MZN</p>
-                    <small style="color:#666;">Vendas − Devoluções</small>
+                <div class="kpi">
+                    <span class="label">Vendas líquidas</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(vendasLiquidas, 1, 2)} + ' MZN'">0 MZN</span>
+                    <span class="form-hint">Vendas − devoluções</span>
                 </div>
-                <div class="stat-card" style="border-left:4px solid #8e44ad;">
-                    <h3>📦 Custo Mercadoria Vendida (CMV)</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(custoMercadoriaVendida, 1, 2)} + ' MZN'">0 MZN</p>
-                    <small style="color:#666;">Custo dos itens vendidos (ajustado por devoluções)</small>
+                <div class="kpi">
+                    <span class="label">CMV</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(custoMercadoriaVendida, 1, 2)} + ' MZN'">0 MZN</span>
+                    <span class="form-hint">Custo dos itens vendidos</span>
                 </div>
-                <div class="stat-card" style="border-left:4px solid #16a085;">
-                    <h3>📊 Lucro Bruto</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(lucroBruto, 1, 2)} + ' MZN'">0 MZN</p>
-                    <small style="color:#666;">Vendas Líquidas − CMV</small>
+                <div class="kpi strong">
+                    <span class="label">Lucro bruto</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(lucroBruto, 1, 2)} + ' MZN'">0 MZN</span>
+                    <span class="form-hint">Vendas líquidas − CMV</span>
                 </div>
-                <div class="stat-card" style="border-left:4px solid #e67e22;">
-                    <h3>💸 Despesas</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(totalDespesas, 1, 2)} + ' MZN'">0 MZN</p>
+                <div class="kpi warning">
+                    <span class="label">Despesas</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(totalDespesas, 1, 2)} + ' MZN'">0 MZN</span>
                 </div>
-                <div class="stat-card" style="border-left:4px solid #27ae60;">
-                    <h3>📈 Lucro Líquido</h3>
-                    <p class="stat-value" th:text="${#numbers.formatDecimal(lucroLiquido, 1, 2)} + ' MZN'">0 MZN</p>
-                    <small style="color:#666;">Lucro Bruto − Despesas</small>
+                <div class="kpi strong">
+                    <span class="label">Lucro líquido</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(lucroLiquido, 1, 2)} + ' MZN'">0 MZN</span>
+                    <span class="form-hint">Lucro bruto − despesas</span>
                 </div>
-                <div class="stat-card">
-                    <h3>📖 Vendas Fiado</h3>
-                    <p class="stat-value" th:text="${vendasFiado}">0</p>
+                <div class="kpi">
+                    <span class="label">Vendas fiado</span>
+                    <span class="value" th:text="${vendasFiado}">0</span>
                 </div>
             </div>
-            <p class="muted" style="margin: -10px 0 20px; color:#666; font-size:13px;">Nota: o CMV usa o preço de custo registado no momento da venda. Vendas antigas sem custo registado entram como custo 0; mantenha o preço de custo dos produtos atualizado para maior precisão.</p>
 
-            <!-- Formas de Pagamento -->
-            <div class="relatorio-secao">
-                <h3>💳 Formas de Pagamento</h3>
-                <table class="nano-table">
-                    <thead>
-                        <tr><th>Forma</th><th>Qtd</th><th>Valor Total</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="entry : ${porFormaPagamento}">
-                            <td>
-                                <span th:switch="${entry.key}">
-                                    <span th:case="'cash'">💵 Cash</span>
-                                    <span th:case="'mpesa'">📱 M-Pesa</span>
-                                    <span th:case="'emola'">📱 e-Mola</span>
-                                    <span th:case="'cartao'">💳 Cartão</span>
-                                    <span th:case="*">💵 Cash</span>
-                                </span>
-                            </td>
-                            <td th:text="${entry.value}"></td>
-                            <td th:text="${#numbers.formatDecimal(valorPorFormaPagamento[entry.key], 1, 2)} + ' MZN'"></td>
-                        </tr>
-                        <tr th:if="${#maps.isEmpty(porFormaPagamento)}">
-                            <td colspan="3" style="text-align:center;">Sem dados para este período.</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <p class="muted mb-16">Nota: o CMV usa o preço de custo registado no momento da venda. Vendas antigas sem custo registado entram como custo 0 — mantenha o preço de custo atualizado para maior precisão.</p>
+
+            <div class="card-grid two">
+                <div class="card">
+                    <h2><i class="fas fa-credit-card"></i> Formas de pagamento</h2>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr><th>Forma</th><th>Qtd</th><th>Valor total</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="entry : ${porFormaPagamento}">
+                                    <td>
+                                        <span th:switch="${entry.key}">
+                                            <span th:case="'cash'">Dinheiro</span>
+                                            <span th:case="'mpesa'">M-Pesa</span>
+                                            <span th:case="'emola'">e-Mola</span>
+                                            <span th:case="'cartao'">Cartão</span>
+                                            <span th:case="*">Dinheiro</span>
+                                        </span>
+                                    </td>
+                                    <td th:text="${entry.value}"></td>
+                                    <td th:text="${#numbers.formatDecimal(valorPorFormaPagamento[entry.key], 1, 2)} + ' MZN'"></td>
+                                </tr>
+                                <tr th:if="${#maps.isEmpty(porFormaPagamento)}">
+                                    <td colspan="3" class="muted center">Sem dados para este período.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-trophy"></i> Top produtos</h2>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr><th>#</th><th>Produto</th><th>Qtd vendida</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="entry, iterStat : ${topProdutos}">
+                                    <td th:text="${iterStat.count}"></td>
+                                    <td th:text="${entry.key}"></td>
+                                    <td th:text="${entry.value}"></td>
+                                </tr>
+                                <tr th:if="${#maps.isEmpty(topProdutos)}">
+                                    <td colspan="3" class="muted center">Sem vendas neste período.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- Top Produtos -->
-            <div class="relatorio-secao">
-                <h3>🏆 Top Produtos Mais Vendidos</h3>
-                <table class="nano-table">
-                    <thead>
-                        <tr><th>#</th><th>Produto</th><th>Qtd Vendida</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="entry, iterStat : ${topProdutos}">
-                            <td th:text="${iterStat.count}"></td>
-                            <td th:text="${entry.key}"></td>
-                            <td th:text="${entry.value}"></td>
-                        </tr>
-                        <tr th:if="${#maps.isEmpty(topProdutos)}">
-                            <td colspan="3" style="text-align:center;">Sem vendas neste período.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Fiado Pendente -->
-            <div class="relatorio-secao" th:if="${totalFiado > 0}">
-                <h3>📖 Fiado Pendente</h3>
-                <div class="total-pendente">
-                    💸 Total fiado neste período: <strong th:text="${#numbers.formatDecimal(totalFiado, 1, 2)} + ' MZN'"></strong>
+            <div class="card" th:if="${totalFiado > 0}">
+                <h2><i class="fas fa-book-open"></i> Fiado pendente</h2>
+                <div class="kpi warning">
+                    <span class="label">Total fiado neste período</span>
+                    <span class="value" th:text="${#numbers.formatDecimal(totalFiado, 1, 2)} + ' MZN'">0 MZN</span>
                 </div>
             </div>
         </main>
     </div>
+</div>
 </body>
 </html>

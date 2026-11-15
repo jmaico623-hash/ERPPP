@@ -1,65 +1,60 @@
 <!DOCTYPE html>
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cupões - Admin</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/theme.css">
-    <script defer src="/js/theme.js"></script>
-</head>
-<body>
-    <nav class="navbar navbar-admin">
-        <div class="logo"><i class="fas fa-shield-alt"></i> Admin</div>
-        <div class="user-info"><span th:text="${session.adminNome}"></span><a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a></div>
-    </nav>
-    <div class="main-container">
-        <aside class="sidebar">
-            <ul>
-                <li><a href="/admin"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="/admin/vendas"><i class="fas fa-shopping-cart"></i> Vendas Globais</a></li>
-                <li><a href="/admin/ranking"><i class="fas fa-trophy"></i> Ranking</a></li>
-                <li><a href="/admin/financeiro"><i class="fas fa-chart-line"></i> Financeiro</a></li>
-                <li><a href="/admin/pagamentos"><i class="fas fa-credit-card"></i> Pagamentos</a></li>
-                <li><a href="/admin/config"><i class="fas fa-cog"></i> Config</a></li>
-                <li class="active"><a href="/admin/cupoes"><i class="fas fa-gift"></i> Cupões</a></li>
-                <li><a href="/admin/logs"><i class="fas fa-clipboard-list"></i> Logs</a></li>
-            </ul>
-        </aside>
-        <main class="content admin-content" style="width:100%;">
+<head th:replace="~{fragments/admin :: head('Cupões - Admin')}"></head>
+<body class="dash-body">
+<div class="dash-shell">
+    <aside th:replace="~{fragments/admin :: sidebar('cupoes')}"></aside>
+
+    <div class="dash-main">
+        <header th:replace="~{fragments/admin :: topbar('Cupões de desconto')}"></header>
+
+        <main class="dash-content">
             <div th:replace="~{admin-flash :: flash}"></div>
 
-            <h1>🎁 Cupões de Desconto</h1>
+            <div class="dash-header">
+                <div>
+                    <span class="eyebrow"><i class="fas fa-gift"></i> Financeiro</span>
+                    <h1>Cupões de desconto</h1>
+                    <p>Códigos promocionais para renovação de assinaturas.</p>
+                </div>
+            </div>
+
             <div class="assinatura-card">
-                <h2>Criar Novo Cupão</h2>
+                <h2><i class="fas fa-plus"></i> Criar novo cupão</h2>
                 <form th:action="@{/admin/cupao/criar}" method="post" class="inline-form">
-                    <input type="text" name="codigo" placeholder="Código (ex: PROMO10)" required pattern="[A-Za-z0-9_-]{3,50}" title="3–50 caracteres: letras, números, '-' ou '_'">
-                    <input type="number" name="descontoPercent" placeholder="% Desconto" min="0.01" max="100" step="0.01" required>
+                    <input type="text" name="codigo" placeholder="Código (ex: PROMO10)" required
+                           pattern="[A-Za-z0-9_-]{3,50}" title="3–50 caracteres: letras, números, '-' ou '_'">
+                    <input type="number" name="descontoPercent" placeholder="% desconto" min="0.01" max="100" step="0.01" required>
                     <select name="clienteId">
                         <option value="">Todos os clientes</option>
                         <option th:each="c : ${clientes}" th:value="${c.id}" th:text="${c.nomeNegocio}"></option>
                     </select>
-                    <button type="submit" class="btn-success"><i class="fas fa-plus"></i> Criar Cupão</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-plus"></i> Criar cupão</button>
                 </form>
             </div>
 
-            <h2 style="margin-top:30px;">Cupões criados</h2>
-            <table class="nano-table">
-                <thead><tr><th>Código</th><th>Desconto</th><th>Cliente</th><th>Status</th><th>Criado em</th></tr></thead>
-                <tbody>
-                    <tr th:if="${#lists.isEmpty(cupoms)}"><td colspan="5" style="text-align:center;">Nenhum cupão criado.</td></tr>
-                    <tr th:each="c : ${cupoms}">
-                        <td th:text="${c.codigo}"></td>
-                        <td th:text="${c.descontoPercent} + '%'"></td>
-                        <td th:text="${c.tenantId} ?: 'Todos os clientes'"></td>
-                        <td><span th:if="${c.ativo}" class="badge badge-success">Ativo</span><span th:unless="${c.ativo}" class="badge badge-danger">Inativo</span></td>
-                        <td th:text="${#temporals.format(c.criadoEm, 'dd/MM/yyyy HH:mm')}"></td>
-                    </tr>
-                </tbody>
-            </table>
-            <p style="color:#7f8c8d;margin-top:20px;">⚠️ Cupões são registados mas ainda não são aplicados automaticamente nas vendas.</p>
+            <h2 class="section-title"><i class="fas fa-list"></i> Cupões criados</h2>
+            <div class="table-responsive">
+                <table class="nano-table">
+                    <thead><tr><th>Código</th><th>Desconto</th><th>Cliente</th><th>Estado</th><th>Criado em</th></tr></thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(cupoms)}"><td colspan="5" class="muted center">Nenhum cupão criado.</td></tr>
+                        <tr th:each="c : ${cupoms}">
+                            <td th:text="${c.codigo}"></td>
+                            <td th:text="${c.descontoPercent} + '%'"></td>
+                            <td th:text="${c.tenantId} ?: 'Todos os clientes'"></td>
+                            <td>
+                                <span th:if="${c.ativo}" class="badge badge-success">Ativo</span>
+                                <span th:unless="${c.ativo}" class="badge badge-danger">Inativo</span>
+                            </td>
+                            <td th:text="${#temporals.format(c.criadoEm, 'dd/MM/yyyy HH:mm')}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="muted">Nota: os cupões são registados mas ainda não são aplicados automaticamente nas vendas.</p>
         </main>
     </div>
+</div>
 </body>
 </html>

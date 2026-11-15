@@ -1,90 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - NanoBanana ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="stylesheet" href="/css/theme.css">
-    <script defer src="/js/theme.js"></script>
-</head>
+<head th:replace="~{fragments/shell :: head('Dashboard - NanoBanana ERP')}"></head>
 <body class="dash-body">
 <div class="dash-shell">
 
     <!-- Sidebar -->
-    <aside class="dash-sidebar">
-        <div class="dash-brand">
-            <span class="logo-mark"><i class="fas fa-leaf"></i></span>
-            <div>
-                <strong>NanoBanana ERP</strong>
-                <small th:text="${nomeLoja}">Minha loja</small>
-            </div>
-        </div>
-
-        <nav class="dash-nav">
-            <a href="/dashboard" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
-            <a href="/pdv"><i class="fas fa-cash-register"></i> PDV (Vender)</a>
-            <a href="/pdv/historico"><i class="fas fa-history"></i> Histórico de vendas</a>
-            <a href="/relatorio"><i class="fas fa-chart-pie"></i> Relatórios</a>
-
-            <span class="dash-nav-label">Operação</span>
-            <a href="/stock/gestao"><i class="fas fa-boxes-stacked"></i> Gestão de stock</a>
-            <a href="/inventario"><i class="fas fa-clipboard-list"></i> Inventário</a>
-            <a href="/estagnados"><i class="fas fa-hourglass-half"></i> Produtos estagnados</a>
-            <a href="/alertas">
-                <i class="fas fa-bell"></i> Alertas
-                <span class="nav-pill" th:if="${alertasNaoLidos > 0}" th:text="${alertasNaoLidos}">0</span>
-            </a>
-
-            <span class="dash-nav-label">Financeiro</span>
-            <a href="/fiados"><i class="fas fa-book-open"></i> Fiados</a>
-            <a href="/caixa"><i class="fas fa-money-bill-wave"></i> Caixa</a>
-            <a href="/despesas"><i class="fas fa-receipt"></i> Despesas</a>
-            <a href="/fornecedores"><i class="fas fa-truck"></i> Fornecedores</a>
-
-            <span class="dash-nav-label">Gestão</span>
-            <a href="/funcionarios"><i class="fas fa-users"></i> Funcionários</a>
-            <a href="/assinatura"><i class="fas fa-id-card"></i> Assinatura</a>
-        </nav>
-
-        <div class="dash-sidebar-footer">
-            <div class="plan-name">
-                <span class="dot"></span> Plano <span th:text="${planoLabel}">Teste</span>
-            </div>
-            <div class="plan-info" th:if="${diasRestantes > 5}" th:text="|${diasRestantes} dias restantes|"></div>
-            <div class="plan-info warn" th:if="${diasRestantes >= 0 and diasRestantes <= 5}"
-                 th:text="${diasRestantes == 0 ? 'Expira hoje' : diasRestantes + ' dias restantes'}"></div>
-            <div class="plan-info danger" th:if="${diasRestantes < 0}"
-                 th:text="${tenant != null and tenant.dataExpiracao != null ? 'Assinatura expirada' : 'Sem data de expiração'}"></div>
-            <a href="/assinatura">Gerir assinatura <i class="fas fa-arrow-right"></i></a>
-        </div>
-    </aside>
+    <aside th:replace="~{fragments/shell :: sidebar('dashboard')}"></aside>
 
     <!-- Conteúdo -->
     <div class="dash-main">
-        <header class="dash-topbar">
-            <div class="dash-topbar-left">
-                <div>
-                    <div class="topbar-store" th:text="${nomeLoja}">Minha loja</div>
-                    <span class="topbar-sub">Painel do proprietário</span>
-                </div>
-            </div>
-            <div class="dash-topbar-right">
-                <span class="status-chip" th:classappend="${caixaAberto != null} ? 'open' : 'closed'">
-                    <span class="dot"></span>
-                    <span th:text="${caixaAberto != null} ? 'Caixa aberto' : 'Caixa fechado'">Caixa fechado</span>
-                </span>
-                <div class="user-chip">
-                    <span class="avatar" th:text="${#strings.toUpperCase(#strings.substring(usuario.nome, 0, 1))}">D</span>
-                    <div class="user-meta">
-                        <strong th:text="${usuario.nome}">Dono</strong>
-                        <small>Proprietário</small>
-                    </div>
-                </div>
-                <a href="/logout" class="icon-btn" title="Sair" aria-label="Sair"><i class="fas fa-right-from-bracket"></i></a>
-            </div>
-        </header>
+        <header th:replace="~{fragments/shell :: topbar('Painel do proprietário')}"></header>
 
         <main class="dash-content">
             <div class="dash-header">

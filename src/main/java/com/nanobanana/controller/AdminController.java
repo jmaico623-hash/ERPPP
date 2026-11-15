@@ -87,6 +87,15 @@ public class AdminController {
             return "redirect:/admin/login?erro=credenciais";
         }
 
+        // Um login de administrador termina qualquer sessão de loja activa
+        // no mesmo navegador.
+        session.removeAttribute("usuarioId");
+        session.removeAttribute("usuarioNome");
+        session.removeAttribute("usuarioEmail");
+        session.removeAttribute("usuarioTelefone");
+        session.removeAttribute("usuarioRole");
+        session.removeAttribute("tenantId");
+
         session.setAttribute("adminId", admin.getId());
         session.setAttribute("adminNome", admin.getNome());
         session.setAttribute("admin", true);

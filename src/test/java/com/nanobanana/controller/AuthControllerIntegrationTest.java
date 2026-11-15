@@ -5,6 +5,8 @@ import com.nanobanana.model.Tenant;
 import com.nanobanana.repository.UsuarioRepository;
 import com.nanobanana.repository.TenantRepository;
 import com.nanobanana.repository.PagamentoRepository;
+import com.nanobanana.repository.CaixaRepository;
+import com.nanobanana.repository.AlertaSistemaRepository;
 import com.nanobanana.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -47,6 +49,12 @@ class AuthControllerIntegrationTest {
 
     @MockBean
     private PagamentoRepository pagamentoRepository;
+
+    @MockBean
+    private CaixaRepository caixaRepository;
+
+    @MockBean
+    private AlertaSistemaRepository alertaSistemaRepository;
 
     @MockBean
     private PasswordEncoder passwordEncoder;

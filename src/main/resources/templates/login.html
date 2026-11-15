@@ -1,120 +1,90 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - NanoBanana ERP</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" th:href="@{/css/variables.css}">
-    <link rel="stylesheet" th:href="@{/css/main.css}">
-    <style th:inline="css">
-        html { height: 100%; }
-        body.login-page { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: var(--text); }
-        body.login-page *, body.login-page *::before, body.login-page *::after { box-sizing: border-box; }
-        body.login-page button, body.login-page input { font-family: inherit; }
-        .login-page { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%); overflow-y: auto; }
-        .login-card { background: var(--card-bg); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 40px; width: 100%; max-width: 440px; margin: auto; }
-        .login-header { text-align: center; margin-bottom: 32px; }
-        .login-logo { width: 72px; height: 72px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-        .login-logo i { font-size: 28px; color: white; }
-        .login-header h1 { font-size: 24px; color: var(--text); margin: 0 0 8px; font-weight: 700; }
-        .login-header p { color: var(--text-muted); font-size: 14px; margin: 0; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 500; color: var(--text); font-size: 14px; }
-        .form-group label i { color: var(--text-muted); width: 20px; }
-        .form-group input { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 16px; color: var(--text); background: var(--card-bg); transition: var(--transition); }
-        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
-        .form-group input::placeholder { color: var(--text-light); }
-        .btn-login { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .btn-login:active { transform: translateY(0); }
-        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-        .login-footer { text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-light); }
-        .login-footer a { color: var(--primary); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
-        .login-footer a:hover { color: var(--primary-dark); }
-        .features { margin-top: 24px; }
-        .features h3 { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .feature-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); }
-        .feature-item i { color: var(--primary); width: 20px; font-size: 12px; }
-        .alert { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 20px; font-size: 14px; animation: slideIn 0.3s ease; }
-        .alert-error { background: var(--danger-light); border: 1px solid #f5c6cb; color: #721c24; }
-        .alert-success { background: var(--success-light); border: 1px solid #c8e6c9; color: #1b5e20; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Portáteis com pouca altura: mantém o login visível sem scroll */
-        @media (max-height: 800px) {
-            .login-page { padding: 16px; }
-            .login-header { margin-bottom: 20px; }
-            .login-logo { width: 56px; height: 56px; margin-bottom: 10px; }
-            .features { display: none; }
-            .login-footer { margin-top: 16px; padding-top: 16px; }
-        }
-    </style>
-    <link rel="stylesheet" href="/css/theme.css">
-    <script defer src="/js/theme.js"></script>
-</head>
-<body class="login-page">
-    <div class="login-card">
-        <div th:if="${erro}" class="alert alert-error" role="alert" style="margin-bottom: 20px; padding: 12px 16px; border-radius: var(--radius); background: var(--danger-light); border: 1px solid #f5c6cb; color: #721c24; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-exclamation-circle"></i>
-            <span th:text="${erro}"></span>
-        </div>
-        <div th:if="${sucesso}" class="alert alert-success" role="alert" style="margin-bottom: 20px; padding: 12px 16px; border-radius: var(--radius); background: var(--success-light); border: 1px solid #c8e6c9; color: #1b5e20; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-check-circle"></i>
-            <span th:text="${sucesso}"></span>
-        </div>
-
-        <div class="login-header">
-            <div class="login-logo"><i class="fas fa-seedling" aria-hidden="true"></i></div>
-            <h1>NanoBanana ERP</h1>
-            <p>Controle Total Anti-Desvio</p>
-        </div>
-
-        <form method="POST" action="/login" id="loginForm">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-            <div class="form-group">
-                <label for="identificador"><i class="fas fa-user" aria-hidden="true"></i> Email ou Telefone</label>
-                <input type="text" id="identificador" name="identificador" placeholder="seu@email.com ou número de telefone" required autocomplete="username" autofocus>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/auth :: head('Entrar - NanoBanana ERP')}"></head>
+<body>
+<div class="auth-shell">
+    <aside class="auth-aside">
+        <div class="auth-brand">
+            <span class="brand-mark"><i class="fas fa-leaf"></i></span>
+            <div>
+                <strong>NanoBanana ERP</strong>
+                <small>Gestão para o comércio lusófono</small>
             </div>
-            <div class="form-group">
-                <label for="senha"><i class="fas fa-lock" aria-hidden="true"></i> Senha</label>
-                <input type="password" id="senha" name="senha" placeholder="Sua senha" required autocomplete="current-password">
+        </div>
+
+        <div class="auth-pitch">
+            <h2>Controle total contra o desvio.</h2>
+            <p>Venda, controle o stock e acompanhe o lucro real da sua loja — mesmo quando não está presente.</p>
+            <ul class="auth-features">
+                <li><i class="fas fa-check"></i> Apenas o proprietário controla o stock</li>
+                <li><i class="fas fa-check"></i> Vendedores apenas vendem</li>
+                <li><i class="fas fa-check"></i> Tudo registado e auditado</li>
+                <li><i class="fas fa-check"></i> Alertas automáticos de anomalias</li>
+            </ul>
+        </div>
+
+        <p class="auth-legal">NanoBanana ERP · Feito para o comércio lusófono</p>
+    </aside>
+
+    <main class="auth-main">
+        <div class="auth-card">
+            <div class="auth-header">
+                <span class="auth-eyebrow"><i class="fas fa-seedling"></i> Bem-vindo de volta</span>
+                <h1>Entrar na sua loja</h1>
+                <p>Use o email ou o telefone registado.</p>
             </div>
-            <button type="submit" class="btn-login" id="loginBtn">
-                <i class="fas fa-sign-in-alt" aria-hidden="true"></i> Entrar
-            </button>
-        </form>
 
-        <div class="login-footer">
-            <a href="/registrar"><i class="fas fa-user-plus" aria-hidden="true"></i> Criar conta grátis (15 dias)</a>
+            <div th:if="${erro}" class="auth-alert error" role="alert">
+                <i class="fas fa-circle-exclamation"></i>
+                <span th:text="${erro}"></span>
+            </div>
+            <div th:if="${sucesso}" class="auth-alert success" role="alert">
+                <i class="fas fa-circle-check"></i>
+                <span th:text="${sucesso}"></span>
+            </div>
+
+            <form method="POST" action="/login" id="loginForm" class="auth-form">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <div class="auth-field">
+                    <label for="identificador">Email ou telefone</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="identificador" name="identificador" placeholder="seu@email.com ou 84 123 4567"
+                               required autocomplete="username" autofocus>
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label for="senha">Senha</label>
+                    <div class="input-wrap">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="senha" name="senha" placeholder="Sua senha"
+                               required autocomplete="current-password">
+                    </div>
+                </div>
+                <button type="submit" class="btn-auth" id="loginBtn">
+                    <i class="fas fa-right-to-bracket"></i> Entrar
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <span>Ainda não tem conta? <a href="/registrar">Criar conta grátis</a></span>
+                <a href="/admin/login" class="muted-link">Acesso administrativo</a>
+            </div>
         </div>
+    </main>
+</div>
 
-        <div class="features">
-            <h3>🛡️ Recursos Anti-Desvio</h3>
-            <div class="feature-item"><i class="fas fa-check" aria-hidden="true"></i><span>Apenas o DONO controla o stock</span></div>
-            <div class="feature-item"><i class="fas fa-check" aria-hidden="true"></i><span>Vendedores APENAS vendem</span></div>
-            <div class="feature-item"><i class="fas fa-check" aria-hidden="true"></i><span>Tudo registrado e auditado</span></div>
-            <div class="feature-item"><i class="fas fa-check" aria-hidden="true"></i><span>Alertas automáticos de anomalias</span></div>
-        </div>
-    </div>
-
-    <script th:inline="javascript">
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('loginForm');
-            const btn = document.getElementById('loginBtn');
-            if (form && btn) {
-                form.addEventListener('submit', () => {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
-                });
-            }
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && (e.target.id === 'identificador' || e.target.id === 'senha')) {
-                    e.preventDefault();
-                    btn?.click();
-                }
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var form = document.getElementById('loginForm');
+        var btn = document.getElementById('loginBtn');
+        if (form && btn) {
+            form.addEventListener('submit', function () {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
             });
-        });
-    </script>
+        }
+    });
+</script>
 </body>
 </html>

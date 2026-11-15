@@ -1,59 +1,53 @@
 <!DOCTYPE html>
 <html lang="pt" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalhes do Cliente - Admin</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/theme.css">
-    <script defer src="/js/theme.js"></script>
-</head>
-<body>
-    <nav class="navbar navbar-admin">
-        <div class="logo"><i class="fas fa-shield-alt"></i> Admin - NanoBanana ERP</div>
-        <div class="user-info">
-            <span th:text="${session.adminNome}" style="font-weight:600;"></span>
-            <a href="/admin/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
-    </nav>
-    <div class="main-container">
-        <aside class="sidebar">
-            <ul>
-                <li><a href="/admin"><i class="fas fa-arrow-left"></i> Voltar ao Dashboard</a></li>
-            </ul>
-        </aside>
-        <main class="content admin-content">
+<head th:replace="~{fragments/admin :: head('Detalhes do cliente - Admin')}"></head>
+<body class="dash-body">
+<div class="dash-shell">
+    <aside th:replace="~{fragments/admin :: sidebar('dashboard')}"></aside>
+
+    <div class="dash-main">
+        <header th:replace="~{fragments/admin :: topbar('Detalhes do cliente')}"></header>
+
+        <main class="dash-content">
             <div th:replace="~{admin-flash :: flash}"></div>
 
-            <h1>👤 Detalhes do Cliente</h1>
+            <div class="dash-header">
+                <div>
+                    <span class="eyebrow"><i class="fas fa-user"></i> Cliente</span>
+                    <h1 th:text="${cliente.nome}">Cliente</h1>
+                    <p th:text="${cliente.nomeNegocio}">Negócio</p>
+                </div>
+                <div class="dash-actions">
+                    <a href="/admin" class="btn-dash ghost"><i class="fas fa-arrow-left"></i> Voltar</a>
+                </div>
+            </div>
 
-            <!-- Info do Cliente -->
             <div class="assinatura-card">
-                <h2 th:text="${cliente.nome}"></h2>
+                <h2><i class="fas fa-address-card"></i> Informação do cliente</h2>
                 <table class="info-table">
-                    <tr><td><strong>Email</strong></td><td th:text="${cliente.email}"></td></tr>
-                    <tr><td><strong>Telefone</strong></td><td th:text="${cliente.telefone}"></td></tr>
-                    <tr><td><strong>Negócio</strong></td><td th:text="${cliente.nomeNegocio}"></td></tr>
-                    <tr><td><strong>Registo</strong></td><td th:text="${#temporals.format(cliente.criadoEm, 'dd/MM/yyyy HH:mm')}"></td></tr>
+                    <tr><td><strong>Email</strong></td><td th:text="${cliente.email}">-</td></tr>
+                    <tr><td><strong>Telefone</strong></td><td th:text="${cliente.telefone}">-</td></tr>
+                    <tr><td><strong>Negócio</strong></td><td th:text="${cliente.nomeNegocio}">-</td></tr>
+                    <tr><td><strong>Registo</strong></td><td th:text="${#temporals.format(cliente.criadoEm, 'dd/MM/yyyy HH:mm')}">-</td></tr>
                 </table>
             </div>
 
-            <!-- Assinatura -->
             <div class="assinatura-card" th:if="${assinatura}">
-                <h2>📋 Assinatura</h2>
+                <h2><i class="fas fa-id-card"></i> Assinatura</h2>
                 <table class="info-table">
-                    <tr><td><strong>Plano</strong></td>
+                    <tr>
+                        <td><strong>Plano</strong></td>
                         <td>
                             <span th:if="${assinatura.plano == 'pago'}" class="badge badge-success">Pago</span>
                             <span th:if="${assinatura.plano == 'teste'}" class="badge badge-warning">Teste</span>
                             <span th:if="${assinatura.plano == 'expirado'}" class="badge badge-danger">Expirado</span>
                         </td>
                     </tr>
-                    <tr><td><strong>Início</strong></td><td th:text="${assinatura.dataInicio}"></td></tr>
-                    <tr><td><strong>Fim Teste</strong></td><td th:text="${assinatura.plano == 'teste' ? assinatura.dataExpiracao : '-' ?: '-'}"></td></tr>
-                    <tr><td><strong>Expiração</strong></td><td th:text="${assinatura.dataExpiracao} ?: '-'"></td></tr>
-                    <tr><td><strong>Ativa</strong></td>
+                    <tr><td><strong>Início</strong></td><td th:text="${assinatura.dataInicio}">-</td></tr>
+                    <tr><td><strong>Fim do teste</strong></td><td th:text="${assinatura.plano == 'teste' ? assinatura.dataExpiracao : '-'} ?: '-'">-</td></tr>
+                    <tr><td><strong>Expiração</strong></td><td th:text="${assinatura.dataExpiracao} ?: '-'">-</td></tr>
+                    <tr>
+                        <td><strong>Ativa</strong></td>
                         <td>
                             <span th:if="${assinatura.isAtivo()}" class="badge badge-success">Sim</span>
                             <span th:unless="${assinatura.isAtivo()}" class="badge badge-danger">Não</span>
@@ -62,18 +56,17 @@
                 </table>
             </div>
 
-            <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <h3><i class="fas fa-shopping-cart"></i> Total Vendas</h3>
+                    <h3><i class="fas fa-cart-shopping"></i> Total de vendas</h3>
                     <p class="stat-value" th:text="${#numbers.formatDecimal(totalVendas, 1, 2)} + ' MZN'">0 MZN</p>
                 </div>
                 <div class="stat-card warning">
-                    <h3><i class="fas fa-book-open"></i> Fiado Pendente</h3>
+                    <h3><i class="fas fa-book-open"></i> Fiado pendente</h3>
                     <p class="stat-value" th:text="${#numbers.formatDecimal(totalFiado, 1, 2)} + ' MZN'">0 MZN</p>
                 </div>
                 <div class="stat-card">
-                    <h3><i class="fas fa-boxes"></i> Valor Stock</h3>
+                    <h3><i class="fas fa-boxes-stacked"></i> Valor em stock</h3>
                     <p class="stat-value" th:text="${#numbers.formatDecimal(valorStock, 1, 2)} + ' MZN'">0 MZN</p>
                 </div>
                 <div class="stat-card">
@@ -82,60 +75,64 @@
                 </div>
             </div>
 
-            <!-- Produtos -->
-            <h2>📦 Produtos</h2>
-            <table class="nano-table">
-                <thead><tr><th>Nome</th><th>Preço</th><th>Stock</th><th>Valor</th></tr></thead>
-                <tbody>
-                    <tr th:if="${#lists.isEmpty(produtos)}"><td colspan="4" style="text-align:center;">Sem produtos.</td></tr>
-                    <tr th:each="p : ${produtos}">
-                        <td th:text="${p.nome}"></td>
-                        <td th:text="${p.precoVenda} + ' MZN'"></td>
-                        <td th:text="${p.stockAtual}"></td>
-                        <td th:text="${p.valorStock} + ' MZN'"></td>
-                    </tr>
-                </tbody>
-            </table>
+            <h2 class="section-title"><i class="fas fa-box"></i> Produtos</h2>
+            <div class="table-responsive">
+                <table class="nano-table">
+                    <thead><tr><th>Nome</th><th>Preço</th><th>Stock</th><th>Valor</th></tr></thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(produtos)}"><td colspan="4" class="muted center">Sem produtos.</td></tr>
+                        <tr th:each="p : ${produtos}">
+                            <td th:text="${p.nome}"></td>
+                            <td th:text="${p.precoVenda} + ' MZN'"></td>
+                            <td th:text="${p.stockAtual}"></td>
+                            <td th:text="${p.valorStock} + ' MZN'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-            <!-- Fiados -->
-            <h2 style="margin-top:30px;">📖 Fiados</h2>
-            <table class="nano-table">
-                <thead><tr><th>Cliente</th><th>Valor</th><th>Data</th><th>Estado</th></tr></thead>
-                <tbody>
-                    <tr th:if="${#lists.isEmpty(fiados)}"><td colspan="4" style="text-align:center;">Sem fiados.</td></tr>
-                    <tr th:each="f : ${fiados}" th:class="${f.pago} ? 'pago' : ''">
-                        <td th:text="${f.nomeCliente}"></td>
-                        <td th:text="${f.valor} + ' MZN'"></td>
-                        <td th:text="${#temporals.format(f.dataCriacao, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td>
-                            <span th:if="${f.cancelado}" class="badge badge-danger">Cancelado</span>
-                            <span th:if="${f.pago}" class="badge badge-success">Pago</span>
-                            <span th:if="${!f.pago and !f.cancelado}" class="badge badge-warning">Pendente</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <h2 class="section-title"><i class="fas fa-book-open"></i> Fiados</h2>
+            <div class="table-responsive">
+                <table class="nano-table">
+                    <thead><tr><th>Cliente</th><th>Valor</th><th>Data</th><th>Estado</th></tr></thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(fiados)}"><td colspan="4" class="muted center">Sem fiados.</td></tr>
+                        <tr th:each="f : ${fiados}" th:classappend="${f.pago} ? 'pago' : ''">
+                            <td th:text="${f.nomeCliente}"></td>
+                            <td th:text="${f.valor} + ' MZN'"></td>
+                            <td th:text="${#temporals.format(f.dataCriacao, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td>
+                                <span th:if="${f.cancelado}" class="badge badge-danger">Cancelado</span>
+                                <span th:if="${f.pago}" class="badge badge-success">Pago</span>
+                                <span th:if="${!f.pago and !f.cancelado}" class="badge badge-warning">Pendente</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-            <!-- Vendas Recentes -->
-            <h2 style="margin-top:30px;">🛒 Vendas Recentes</h2>
-            <table class="nano-table">
-                <thead><tr><th>ID</th><th>Data</th><th>Valor</th><th>Pagamento</th><th>Fiado</th></tr></thead>
-                <tbody>
-                    <tr th:if="${#lists.isEmpty(vendas)}"><td colspan="5" style="text-align:center;">Sem vendas.</td></tr>
-                    <tr th:each="v : ${vendas}" th:class="${v.status.name() == 'CANCELADA'} ? 'venda-cancelada' : ''">
-                        <td th:text="${v.id}"></td>
-                        <td th:text="${#temporals.format(v.data, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td th:text="${#numbers.formatDecimal(v.valor, 1, 2)} + ' MZN'"></td>
-                        <td th:text="${v.formaPagamento}"></td>
-                        <td>
-                            <span th:if="${v.fiado}" class="badge badge-warning">Fiado</span>
-                            <span th:if="${v.status.name() == 'CANCELADA'}" class="badge badge-danger">Cancelada</span>
-                            <span th:unless="${v.fiado or v.status.name() == 'CANCELADA'}" class="badge badge-success">Não</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <h2 class="section-title"><i class="fas fa-cart-shopping"></i> Vendas recentes</h2>
+            <div class="table-responsive">
+                <table class="nano-table">
+                    <thead><tr><th>ID</th><th>Data</th><th>Valor</th><th>Pagamento</th><th>Fiado</th></tr></thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(vendas)}"><td colspan="5" class="muted center">Sem vendas.</td></tr>
+                        <tr th:each="v : ${vendas}" th:classappend="${v.status.name() == 'CANCELADA'} ? 'venda-cancelada' : ''">
+                            <td th:text="${v.id}"></td>
+                            <td th:text="${#temporals.format(v.data, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${#numbers.formatDecimal(v.valor, 1, 2)} + ' MZN'"></td>
+                            <td th:text="${v.formaPagamento}"></td>
+                            <td>
+                                <span th:if="${v.fiado}" class="badge badge-warning">Fiado</span>
+                                <span th:if="${v.status.name() == 'CANCELADA'}" class="badge badge-danger">Cancelada</span>
+                                <span th:unless="${v.fiado or v.status.name() == 'CANCELADA'}" class="badge badge-success">Não</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </main>
     </div>
+</div>
 </body>
 </html>

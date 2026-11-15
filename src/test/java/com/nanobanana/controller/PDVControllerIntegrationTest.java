@@ -73,6 +73,9 @@ class PDVControllerIntegrationTest {
     @MockBean
     private AlertaSistemaRepository alertaSistemaRepository;
 
+    @MockBean
+    private CaixaRepository caixaRepository;
+
     @Test
     void pdvRequerAutenticacao() throws Exception {
         when(authService.getUsuarioLogado()).thenReturn(Optional.empty());

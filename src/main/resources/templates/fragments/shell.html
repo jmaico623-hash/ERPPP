@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title th:text="${titulo}">NanoBanana ERP</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <script defer src="/js/theme.js"></script>
+</head>
+<body>
+
+<!-- ============================================================
+     Barra lateral — navegação por perfil
+     Parâmetro: chave do item ativo (dashboard, pdv, caixa, ...)
+     ============================================================ -->
+<aside class="dash-sidebar" th:fragment="sidebar(ativo)">
+    <div class="dash-brand">
+        <span class="logo-mark"><i class="fas fa-leaf"></i></span>
+        <div>
+            <strong>NanoBanana ERP</strong>
+            <small th:text="${navNomeLoja} ?: 'Minha loja'">Minha loja</small>
+        </div>
+    </div>
+
+    <nav class="dash-nav">
+        <a href="/dashboard" th:classappend="${ativo == 'dashboard'} ? 'active'">
+            <i class="fas fa-chart-line"></i> Dashboard
+        </a>
+        <a href="/pdv" th:classappend="${ativo == 'pdv'} ? 'active'">
+            <i class="fas fa-cash-register"></i> PDV (Vender)
+        </a>
+        <a href="/pdv/historico" th:classappend="${ativo == 'historico'} ? 'active'">
+            <i class="fas fa-history"></i>
+            <span th:text="${navRole == 'VENDEDOR'} ? 'Minhas vendas' : 'Histórico de vendas'">Histórico de vendas</span>
+        </a>
+        <a href="/relatorio" th:classappend="${ativo == 'relatorio'} ? 'active'" th:if="${navRole != 'VENDEDOR'}">
+            <i class="fas fa-chart-pie"></i> Relatórios
+        </a>
+
+        <th:block th:if="${navRole == 'DONO'}">
+            <span class="dash-nav-label">Operação</span>
+            <a href="/stock/gestao" th:classappend="${ativo == 'stock'} ? 'active'">
+                <i class="fas fa-boxes-stacked"></i> Gestão de stock
+            </a>
+            <a href="/inventario" th:classappend="${ativo == 'inventario'} ? 'active'">
+                <i class="fas fa-clipboard-list"></i> Inventário
+            </a>
+            <a href="/estagnados" th:classappend="${ativo == 'estagnados'} ? 'active'">
+                <i class="fas fa-hourglass-half"></i> Produtos estagnados
+            </a>
+            <a href="/alertas" th:classappend="${ativo == 'alertas'} ? 'active'">
+                <i class="fas fa-bell"></i> Alertas
+                <span class="nav-pill" th:if="${navAlertas > 0}" th:text="${navAlertas}">0</span>
+            </a>
+        </th:block>
+
+        <span class="dash-nav-label">Financeiro</span>
+        <a href="/fiados" th:classappend="${ativo == 'fiados'} ? 'active'">
+            <i class="fas fa-book-open"></i> Fiados
+        </a>
+        <a href="/caixa" th:classappend="${ativo == 'caixa'} ? 'active'">
+            <i class="fas fa-money-bill-wave"></i> Caixa
+        </a>
+        <th:block th:if="${navRole != 'VENDEDOR'}">
+            <a href="/despesas" th:classappend="${ativo == 'despesas'} ? 'active'">
+                <i class="fas fa-receipt"></i> Despesas
+            </a>
+            <a href="/fornecedores" th:classappend="${ativo == 'fornecedores'} ? 'active'">
+                <i class="fas fa-truck"></i> Fornecedores
+            </a>
+        </th:block>
+
+        <th:block th:if="${navRole == 'DONO'}">
+            <span class="dash-nav-label">Gestão</span>
+            <a href="/funcionarios" th:classappend="${ativo == 'funcionarios'} ? 'active'">
+                <i class="fas fa-users"></i> Funcionários
+            </a>
+        </th:block>
+
+        <span class="dash-nav-label">Conta</span>
+        <a href="/assinatura" th:classappend="${ativo == 'assinatura'} ? 'active'">
+            <i class="fas fa-id-card"></i> Assinatura
+        </a>
+    </nav>
+
+    <div class="dash-sidebar-footer">
+        <div class="plan-name">
+            <span class="dot"></span> Plano <span th:text="${navPlanoLabel} ?: 'Teste'">Teste</span>
+        </div>
+        <div class="plan-info" th:if="${navDiasRestantes != null and navDiasRestantes > 5}"
+             th:text="|${navDiasRestantes} dias restantes|"></div>
+        <div class="plan-info warn" th:if="${navDiasRestantes != null and navDiasRestantes >= 0 and navDiasRestantes <= 5}"
+             th:text="${navDiasRestantes == 0 ? 'Expira hoje' : navDiasRestantes + ' dias restantes'}"></div>
+        <div class="plan-info danger" th:if="${navDiasRestantes != null and navDiasRestantes < 0}"
+             th:text="${navTemExpiracao} ? 'Assinatura expirada' : 'Sem data de expiração'"></div>
+        <a href="/assinatura">Gerir assinatura <i class="fas fa-arrow-right"></i></a>
+    </div>
+</aside>
+
+<!-- ============================================================
+     Barra superior
+     Parâmetro: subtítulo da página
+     ============================================================ -->
+<header class="dash-topbar" th:fragment="topbar(subtitulo)">
+    <div class="dash-topbar-left">
+        <div>
+            <div class="topbar-store" th:text="${navNomeLoja} ?: 'Minha loja'">Minha loja</div>
+            <span class="topbar-sub" th:text="${subtitulo}">Painel</span>
+        </div>
+    </div>
+    <div class="dash-topbar-right">
+        <span class="status-chip" th:classappend="${navCaixaAberto} ? 'open' : 'closed'">
+            <span class="dot"></span>
+            <span th:text="${navCaixaAberto} ? 'Caixa aberto' : 'Caixa fechado'">Caixa fechado</span>
+        </span>
+        <div class="user-chip">
+            <span class="avatar" th:text="${navIniciais} ?: 'U'">U</span>
+            <div class="user-meta">
+                <strong th:text="${navUsuarioNome} ?: 'Utilizador'">Utilizador</strong>
+                <small th:text="${navRoleLabel} ?: 'Utilizador'">Utilizador</small>
+            </div>
+        </div>
+        <button type="button" class="icon-btn" id="nbThemeToggle" aria-label="Alternar tema"></button>
+        <a href="/logout" class="icon-btn" title="Sair" aria-label="Sair"><i class="fas fa-right-from-bracket"></i></a>
+    </div>
+</header>
+
+</body>
+</html>
